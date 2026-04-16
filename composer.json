@@ -1,0 +1,21 @@
+{
+    "name": "lemmon/twig-jsx",
+    "description": "JSX-like component syntax for Twig",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Jakub Pelák",
+            "email": "jpelak@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Lemmon\\TwigJsx\\": "src/"
+        }
+    },
+    "require": {
+        "php": ">=8.0",
+        "twig/twig": "^3.0",
+        "lemmon/clsx": "^1.0"
+    }
+}

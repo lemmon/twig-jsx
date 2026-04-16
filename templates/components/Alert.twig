@@ -1,0 +1,12 @@
+<div 
+    class="{{ clsx('alert', 'alert-' ~ type|default('info'), props.class, { 'alert-important': important|default(false) }) }}"
+    {{ props.except('class')|render }}
+>
+    {% if title is defined %}<strong>{{ title }}</strong>{% endif %}
+    
+    <div>
+        {% block content %}
+            {{ message|default('No message provided.') }}
+        {% endblock %}
+    </div>
+</div>
