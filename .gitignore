@@ -4,4 +4,15 @@ Thumbs.db
 
 # Composer
 /vendor/
-composer.lock
+
+# IDE / Editors
+/.idea/
+/.vscode/
+/.cursor/
+
+# Tooling caches
+/.phpunit.cache/
+.phpunit.result.cache
+
+# Local working notes (not meant for the repo)
+/reports/
