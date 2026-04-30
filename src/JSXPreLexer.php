@@ -27,26 +27,38 @@ class JSXPreLexer extends Lexer
 
     public function tokenize(Source $source): TokenStream
     {
-        $code = $source->getCode();
+        $code = $this->transform($source->getCode());
+
+        return parent::tokenize(new Source($code, $source->getName(), $source->getPath()));
+    }
+
+    /**
+     * Rewrites JSX-like component tags into native Twig include/embed calls.
+     *
+     * Exposed publicly so tests (and tooling) can assert on the rewritten
+     * source without going through the full Twig tokenize/parse pipeline.
+     */
+    public function transform(string $code): string
+    {
         $prefix = preg_quote($this->config['prefix'], '/');
         $tagPattern = ($prefix === '') ? '[A-Z][a-zA-Z0-9]*' : $prefix . '[a-zA-Z0-9]+';
 
         // 1. Self-closing tags: <Component />
-        $code = preg_replace_callback("/<(?P<name>{$tagPattern})\s*(?P<props>[^>]*?)\s*\/>/", function($matches) {
+        $code = preg_replace_callback("/<(?P<name>{$tagPattern})\s*(?P<props>[^>]*?)\s*\/>/", function ($matches) {
             $name = $this->resolveName($matches['name']);
             $props = $this->parseProps($matches['props']);
             return "{% include '{$this->config['directory']}/{$name}{$this->config['extension']}' with {$props} %}";
         }, $code);
 
         // 2. Tags with body: <Component>...</Component>
-        $code = preg_replace_callback("/<(?P<name>{$tagPattern})\s*(?P<props>[^>]*?)>(?P<content>.*?)<\/\\1>/s", function($matches) {
+        $code = preg_replace_callback("/<(?P<name>{$tagPattern})\s*(?P<props>[^>]*?)>(?P<content>.*?)<\/\\1>/s", function ($matches) {
             $name = $this->resolveName($matches['name']);
             $props = $this->parseProps($matches['props']);
             $content = $matches['content'];
             return "{% embed '{$this->config['directory']}/{$name}{$this->config['extension']}' with {$props} %}{% block content %}{$content}{% endblock %}{% endembed %}";
         }, $code);
 
-        return parent::tokenize(new Source($code, $source->getName(), $source->getPath()));
+        return $code;
     }
 
     private function resolveName(string $tagName): string 
