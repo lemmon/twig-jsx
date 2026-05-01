@@ -11,7 +11,6 @@ This project transforms modern, HTML-like component tags into native Twig `{% in
 - **Dynamic Props**: Pass variables or complex Twig expressions using the `:` prefix.
 - **Shorthands**: Support for `:type` (variable) and `important` (boolean) shorthands.
 - **Smart Props**: General HTML attributes are collected into a smart object that can be easily rendered.
-- **Clsx Integration**: Works perfectly with `lemmon/clsx` for dynamic class management.
 
 ## Example Usage
 
@@ -19,12 +18,12 @@ This project transforms modern, HTML-like component tags into native Twig `{% in
 Save your component in `templates/components/Alert.twig`:
 
 ```twig
-<div 
-    class="{{ clsx('alert', 'alert-' ~ type|default('info'), props.class, { 'alert-important': important|default(false) }) }}"
+<div
+    class="alert alert-{{ type|default('info') }}{% if important|default(false) %} alert-important{% endif %}{% if props.class|default('') %} {{ props.class }}{% endif %}"
     {{ props.except('class')|render }}
 >
     {% if title is defined %}<strong>{{ title }}</strong>{% endif %}
-    
+
     <div>
         {% block content %}
             {{ message|default('No message provided.') }}
@@ -45,7 +44,7 @@ $twig->addExtension(new AttributeExtension());
 
 // 2. Register the Lexer
 $twig->setLexer(new JSXPreLexer($twig, [
-    'attr_name' => 'props' 
+    'attr_name' => 'props'
 ]));
 ```
 

@@ -12,7 +12,6 @@ class AttributeExtension extends AbstractExtension
     {
         return [
             new TwigFunction('create_attributes', [$this, 'createAttributes']),
-            new TwigFunction('clsx', 'clsx'),
         ];
     }
 

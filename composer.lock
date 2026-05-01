@@ -4,60 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ea6634bbed05ca108396f2755494bf84",
+    "content-hash": "b42b865481e8bbfb62ca458ffe839e60",
     "packages": [
-        {
-            "name": "lemmon/clsx",
-            "version": "1.0.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/lemmon/clsx-php.git",
-                "reference": "f40aa28b26b99f448a3a4c0cc2a51a52a8a03cc6"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/lemmon/clsx-php/zipball/f40aa28b26b99f448a3a4c0cc2a51a52a8a03cc6",
-                "reference": "f40aa28b26b99f448a3a4c0cc2a51a52a8a03cc6",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=7.4"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "^9.5"
-            },
-            "type": "library",
-            "autoload": {
-                "files": [
-                    "src/clsx.php"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Jakub Pelák",
-                    "email": "jpelak@gmail.com",
-                    "homepage": "https://www.jakubpelak.com/"
-                }
-            ],
-            "description": "A tiny PHP utility to conditionally build `class` attribute strings, inspired by clsx for JavaScript.",
-            "homepage": "https://github.com/lemmon/clsx-php",
-            "keywords": [
-                "class",
-                "clsx",
-                "css",
-                "php",
-                "utility"
-            ],
-            "support": {
-                "issues": "https://github.com/lemmon/clsx-php/issues",
-                "source": "https://github.com/lemmon/clsx-php"
-            },
-            "time": "2025-07-20T06:10:37+00:00"
-        },
         {
             "name": "symfony/deprecation-contracts",
             "version": "v3.6.0",

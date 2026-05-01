@@ -31,3 +31,10 @@ once a stable release is cut.
 - Bumped minimum PHP requirement from `>=8.0` to `^8.1`. PHP 8.0 has been
   end-of-life since November 2023; the bump is a prerequisite for the
   maintained PHPUnit 10 line.
+
+### Removed
+
+- `lemmon/clsx` is no longer a dependency, and `AttributeExtension` no
+  longer registers a `clsx` Twig function. The demo's `Alert.twig` was
+  rewritten to use plain conditional class concatenation. Anyone who wants
+  a class-merging helper can register one on their own Twig environment.
