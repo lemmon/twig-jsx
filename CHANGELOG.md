@@ -45,3 +45,29 @@ once a stable release is cut.
   (`<Alert message="It's mine" />`, `<Alert data-path="a\b" />`) no longer
   produce invalid Twig source. The values are now escaped before being
   spliced into the generated single-quoted Twig string literal.
+
+### Changed
+
+- **Call-site syntax flipped from Vue-style to Svelte/JSX-style.** Use
+  `name="literal"` for static strings and `name={expression}` for Twig
+  expressions; the `:` prefix is gone. Shorthand `{foo}` desugars to
+  `foo={foo}`. Bare attributes (`disabled`) still mean `true`.
+  The old `:foo` syntax now throws `Twig\Error\SyntaxError` with a
+  pointer to the new form rather than silently passing through.
+- **Replaced the two-pass regex preprocessor with a single-pass
+  character scanner** (`JsxSourceTransformer`). The regex
+  implementation had four structural blind spots that the scanner now
+  handles correctly:
+  - tags inside Twig string literals, Twig comments, and HTML comments
+    are passed through verbatim instead of being rewritten;
+  - same-name nested tags (`<Alert><Alert/></Alert>`) track depth
+    properly instead of matching the first close;
+  - `>` inside attribute string values (`<Alert title="a>b" />`) no
+    longer truncates the tag;
+  - brace expressions correctly balance against `{`/`}` while ignoring
+    braces inside Twig string literals (`foo={'a}b'}`, `foo={ {k: 'v'} }`).
+- Unquoted attribute values (`foo=bar`) and unclosed tags now produce
+  clear `Twig\Error\SyntaxError`s instead of silently malformed output.
+- Both single- and double-quoted string attribute values are now
+  accepted (`type='info'` and `type="info"` are equivalent). The old
+  regex only accepted double quotes.

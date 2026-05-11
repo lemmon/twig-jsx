@@ -48,7 +48,7 @@ final class RenderTest extends TestCase
     {
         $twig = $this->makeTwig([
             'components/Alert.twig' => '<div class="alert-{{ type }}">{% block content %}{{ message }}{% endblock %}</div>',
-            'page' => '<Alert :type message="hi" />',
+            'page' => '<Alert {type} message="hi" />',
         ]);
 
         $this->assertSame(
@@ -131,5 +131,37 @@ final class RenderTest extends TestCase
         ]);
 
         $this->assertSame('<a data-path="a\\b">x</a>', $twig->render('page'));
+    }
+
+    public function testBraceExpressionPropRenders(): void
+    {
+        $twig = $this->makeTwig([
+            'components/Alert.twig' => '<div>{{ message }}</div>',
+            'page' => '<Alert message={items|length} />',
+        ]);
+
+        $this->assertSame(
+            '<div>3</div>',
+            $twig->render('page', ['items' => [1, 2, 3]]),
+        );
+    }
+
+    public function testSameNameNestedTagsRender(): void
+    {
+        $twig = $this->makeTwig([
+            'components/Alert.twig' => '[{% block content %}{% endblock %}]',
+            'page' => '<Alert><Alert /></Alert>',
+        ]);
+
+        $this->assertSame('[[]]', $twig->render('page'));
+    }
+
+    public function testTagInsideTwigStringIsNotTransformed(): void
+    {
+        $twig = $this->makeTwig([
+            'page' => '{{ "<Alert />" }}',
+        ]);
+
+        $this->assertSame('<Alert />', $twig->render('page'));
     }
 }

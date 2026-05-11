@@ -33,7 +33,7 @@ $templateString = '
 <h1>Welcome, {{ user.name }}</h1>
 
 <!-- Using SHORTHANDS -->
-<Alert title="Shorthand Demo" :type important message="This used :type and important shorthands!" />
+<Alert title="Shorthand Demo" {type} important message="This component used the {type} shorthand and the bare-boolean shorthand." />
 
 <hr>
 

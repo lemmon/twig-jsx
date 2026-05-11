@@ -32,15 +32,15 @@ final class LexerTransformTest extends TestCase
                 "{% include 'components/Alert.twig' with {'type': 'info', 'attributes': create_attributes({})} %}",
             ],
             'dynamic variable prop' => [
-                '<Alert :type="userType" />',
+                '<Alert type={userType} />',
                 "{% include 'components/Alert.twig' with {'type': userType, 'attributes': create_attributes({})} %}",
             ],
             'dynamic boolean prop' => [
-                '<Alert :important="true" />',
+                '<Alert important={true} />',
                 "{% include 'components/Alert.twig' with {'important': true, 'attributes': create_attributes({})} %}",
             ],
             'shorthand variable prop' => [
-                '<Alert :type />',
+                '<Alert {type} />',
                 "{% include 'components/Alert.twig' with {'type': type, 'attributes': create_attributes({})} %}",
             ],
             'shorthand boolean (known prop)' => [
@@ -48,11 +48,11 @@ final class LexerTransformTest extends TestCase
                 "{% include 'components/Alert.twig' with {'important': true, 'attributes': create_attributes({})} %}",
             ],
             'logic / filter expression' => [
-                '<Alert :count="items|length" />',
+                '<Alert count={items|length} />',
                 "{% include 'components/Alert.twig' with {'count': items|length, 'attributes': create_attributes({})} %}",
             ],
             'complex ternary expression' => [
-                '<Alert :theme="dark ? \'d\' : \'l\'" />',
+                "<Alert theme={dark ? 'd' : 'l'} />",
                 "{% include 'components/Alert.twig' with {'theme': dark ? 'd' : 'l', 'attributes': create_attributes({})} %}",
             ],
         ];
@@ -92,7 +92,7 @@ final class LexerTransformTest extends TestCase
     {
         $this->assertSame(
             "{% include 'components/Alert.twig' with {'type': type, 'important': true, 'attributes': create_attributes({'class': 'big'})} %}",
-            $this->makeLexer()->transform('<Alert :type important class="big" />')
+            $this->makeLexer()->transform('<Alert {type} important class="big" />')
         );
     }
 
@@ -156,5 +156,123 @@ final class LexerTransformTest extends TestCase
             "{% include 'components/Alert.twig' with {'attributes': create_attributes({'aria-label': 'don\\'t'})} %}",
             $this->makeLexer()->transform('<Alert aria-label="don\'t" />')
         );
+    }
+
+    // ---------------------------------------------------------------------
+    // Scanner edge cases — these are the cases the old regex preprocessor
+    // got wrong. Each one would have produced bogus output before #7.
+    // ---------------------------------------------------------------------
+
+    public function testTagInsideTwigOutputIsPassedThrough(): void
+    {
+        $input = '{{ "<Alert />" }}';
+        $this->assertSame($input, $this->makeLexer()->transform($input));
+    }
+
+    public function testTagInsideTwigBlockIsPassedThrough(): void
+    {
+        $input = '{% set s = "<Alert />" %}';
+        $this->assertSame($input, $this->makeLexer()->transform($input));
+    }
+
+    public function testTagInsideTwigCommentIsPassedThrough(): void
+    {
+        $input = '{# <Alert /> #}';
+        $this->assertSame($input, $this->makeLexer()->transform($input));
+    }
+
+    public function testTagInsideHtmlCommentIsPassedThrough(): void
+    {
+        $input = '<!-- <Alert /> -->';
+        $this->assertSame($input, $this->makeLexer()->transform($input));
+    }
+
+    public function testSameNameNestedTagsTrackDepthCorrectly(): void
+    {
+        $this->assertSame(
+            "{% embed 'components/Alert.twig' with {'attributes': create_attributes({})} %}"
+            . '{% block content %}'
+            . "{% include 'components/Alert.twig' with {'attributes': create_attributes({})} %}"
+            . '{% endblock %}{% endembed %}',
+            $this->makeLexer()->transform('<Alert><Alert /></Alert>'),
+        );
+    }
+
+    public function testAngleBracketInsideStringAttributeValue(): void
+    {
+        $this->assertSame(
+            "{% include 'components/Alert.twig' with {'attributes': create_attributes({'data-html': 'a>b'})} %}",
+            $this->makeLexer()->transform('<Alert data-html="a>b" />'),
+        );
+    }
+
+    public function testAngleBracketInsideBraceExpression(): void
+    {
+        $this->assertSame(
+            "{% include 'components/Alert.twig' with {'cmp': a > b, 'attributes': create_attributes({})} %}",
+            $this->makeLexer()->transform('<Alert cmp={a > b} />'),
+        );
+    }
+
+    public function testTwigOutputInsideBodyIsPassedThrough(): void
+    {
+        $this->assertSame(
+            "{% embed 'components/Alert.twig' with {'attributes': create_attributes({})} %}"
+            . '{% block content %}{{- title -}}{% endblock %}{% endembed %}',
+            $this->makeLexer()->transform('<Alert>{{- title -}}</Alert>'),
+        );
+    }
+
+    // ---------------------------------------------------------------------
+    // New call-site syntax — braces for expressions, `{foo}` shorthand.
+    // ---------------------------------------------------------------------
+
+    public function testSingleQuotedStringValueIsAccepted(): void
+    {
+        $this->assertSame(
+            "{% include 'components/Alert.twig' with {'type': 'info', 'attributes': create_attributes({})} %}",
+            $this->makeLexer()->transform("<Alert type='info' />"),
+        );
+    }
+
+    public function testNestedBraceHashInsideExpression(): void
+    {
+        $this->assertSame(
+            "{% include 'components/Alert.twig' with {'cfg': {dark: true, fast: false}, 'attributes': create_attributes({})} %}",
+            $this->makeLexer()->transform('<Alert cfg={ {dark: true, fast: false} } />'),
+        );
+    }
+
+    public function testClosingBraceInsideStringInsideExpression(): void
+    {
+        $this->assertSame(
+            "{% include 'components/Alert.twig' with {'pattern': 'a}b', 'attributes': create_attributes({})} %}",
+            $this->makeLexer()->transform("<Alert pattern={'a}b'} />"),
+        );
+    }
+
+    // ---------------------------------------------------------------------
+    // Error paths — the scanner refuses ambiguous syntax loudly.
+    // ---------------------------------------------------------------------
+
+    public function testOldColonPrefixSyntaxThrowsSyntaxError(): void
+    {
+        $this->expectException(\Twig\Error\SyntaxError::class);
+        $this->expectExceptionMessage("':foo' attribute syntax is no longer supported");
+        $this->makeLexer()->transform('<Alert :type="x" />');
+    }
+
+    public function testUnquotedAttributeValueThrowsSyntaxError(): void
+    {
+        $this->expectException(\Twig\Error\SyntaxError::class);
+        $this->expectExceptionMessage('Unquoted attribute values are not supported');
+        $this->makeLexer()->transform('<Alert foo=bar />');
+    }
+
+    public function testUnclosedBodiedTagThrowsSyntaxError(): void
+    {
+        $this->expectException(\Twig\Error\SyntaxError::class);
+        $this->expectExceptionMessage('Unclosed JSX tag <Alert>');
+        $this->makeLexer()->transform('<Alert>oops');
     }
 }

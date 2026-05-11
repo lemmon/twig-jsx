@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Lemmon\TwigJsx;
 
+use Twig\Environment;
 use Twig\Lexer;
 use Twig\Source;
 use Twig\TokenStream;
-use Twig\Environment;
 
 class JSXPreLexer extends Lexer
 {
@@ -14,13 +16,12 @@ class JSXPreLexer extends Lexer
     public function __construct(Environment $env, array $options = [])
     {
         parent::__construct($env);
-        
-        // Merge defaults with user options
+
         $this->config = array_merge([
-            'directory'   => 'components', 
+            'directory'   => 'components',
             'extension'   => '.twig',
-            'prefix'      => '',           
-            'known_props' => ['title', 'message', 'type', 'important'], 
+            'prefix'      => '',
+            'known_props' => ['title', 'message', 'type', 'important'],
             'attr_name'   => 'attributes',
         ], $options);
     }
@@ -33,95 +34,16 @@ class JSXPreLexer extends Lexer
     }
 
     /**
-     * Rewrites JSX-like component tags into native Twig include/embed calls.
+     * Rewrite JSX-like component tags into native Twig include/embed calls.
      *
-     * Exposed publicly so tests (and tooling) can assert on the rewritten
-     * source without going through the full Twig tokenize/parse pipeline.
+     * Exposed publicly so tests (and external tooling) can assert on the
+     * rewritten source without going through the full Twig tokenize/parse
+     * pipeline. The actual scanning lives in {@see JsxSourceTransformer};
+     * this method exists so callers don't need to know about that class
+     * (and so the public surface is one lexer, not two coordinating types).
      */
     public function transform(string $code): string
     {
-        $prefix = preg_quote($this->config['prefix'], '/');
-        $tagPattern = ($prefix === '') ? '[A-Z][a-zA-Z0-9]*' : $prefix . '[a-zA-Z0-9]+';
-
-        // 1. Self-closing tags: <Component />
-        $code = preg_replace_callback("/<(?P<name>{$tagPattern})\s*(?P<props>[^>]*?)\s*\/>/", function ($matches) {
-            $name = $this->resolveName($matches['name']);
-            $props = $this->parseProps($matches['props']);
-            return "{% include '{$this->config['directory']}/{$name}{$this->config['extension']}' with {$props} %}";
-        }, $code);
-
-        // 2. Tags with body: <Component>...</Component>
-        $code = preg_replace_callback("/<(?P<name>{$tagPattern})\s*(?P<props>[^>]*?)>(?P<content>.*?)<\/\\1>/s", function ($matches) {
-            $name = $this->resolveName($matches['name']);
-            $props = $this->parseProps($matches['props']);
-            $content = $matches['content'];
-            return "{% embed '{$this->config['directory']}/{$name}{$this->config['extension']}' with {$props} %}{% block content %}{$content}{% endblock %}{% endembed %}";
-        }, $code);
-
-        return $code;
-    }
-
-    private function resolveName(string $tagName): string 
-    {
-        if ($this->config['prefix'] !== '' && str_starts_with($tagName, $this->config['prefix'])) {
-            return substr($tagName, strlen($this->config['prefix']));
-        }
-        return $tagName;
-    }
-
-    private function parseProps(string $propsString): string
-    {
-        $props = [];
-        $attributes = [];
-        
-        // Revised Regex: Matches key="value", :key="value", or just :key / key
-        preg_match_all('/(?P<key>[:\w-]+)(?:="(?P<value>[^"]*)")?/', $propsString, $matches, PREG_SET_ORDER);
-
-        foreach ($matches as $match) {
-            $key = $match['key'];
-            $value = $match['value'] ?? null;
-
-            if (str_starts_with($key, ':')) {
-                $realKey = ltrim($key, ':');
-                if ($value === null) {
-                    // Shorthand Variable: :foo -> 'foo': foo
-                    $props[] = "'{$realKey}': {$realKey}";
-                } else {
-                    // Dynamic Prop: :foo="bar" -> 'foo': bar
-                    $props[] = "'{$realKey}': {$value}";
-                }
-            } else {
-                if ($value === null) {
-                    // Shorthand Boolean: important -> 'important': true
-                    if (in_array($key, $this->config['known_props'])) {
-                        $props[] = "'{$key}': true";
-                    } else {
-                        // For attributes, a value-less attribute is just true
-                        $attributes[] = "'{$key}': true";
-                    }
-                } elseif (in_array($key, $this->config['known_props'])) {
-                    $props[] = "'{$key}': '" . $this->escapeStaticValue($value) . "'";
-                } else {
-                    $attributes[] = "'{$key}': '" . $this->escapeStaticValue($value) . "'";
-                }
-            }
-        }
-
-        $props[] = "'{$this->config['attr_name']}': create_attributes({" . implode(', ', $attributes) . "})";
-
-        return '{' . implode(', ', $props) . '}';
-    }
-
-    /**
-     * Escape a static attribute value for safe inclusion in a Twig
-     * single-quoted string literal. Backslashes and apostrophes are the
-     * only characters Twig treats specially inside `'...'`.
-     *
-     * Uses {@see strtr()} (not chained `str_replace`) so a replacement
-     * cannot accidentally re-match its own output.
-     */
-    private function escapeStaticValue(string $value): string
-    {
-        return strtr($value, ['\\' => '\\\\', "'" => "\\'"]);
+        return (new JsxSourceTransformer($this->config))->transform($code);
     }
 }
