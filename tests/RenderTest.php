@@ -112,4 +112,24 @@ final class RenderTest extends TestCase
             $twig->render('page')
         );
     }
+
+    public function testApostropheInStaticPropValueRendersCorrectly(): void
+    {
+        $twig = $this->makeTwig([
+            'components/Alert.twig' => '<p>{{ message }}</p>',
+            'page' => '<Alert message="It\'s mine" />',
+        ]);
+
+        $this->assertSame('<p>It&#039;s mine</p>', $twig->render('page'));
+    }
+
+    public function testBackslashInStaticAttributeRendersCorrectly(): void
+    {
+        $twig = $this->makeTwig([
+            'components/Alert.twig' => '<a {{ attributes|render }}>x</a>',
+            'page' => '<Alert data-path="a\\b" />',
+        ]);
+
+        $this->assertSame('<a data-path="a\\b">x</a>', $twig->render('page'));
+    }
 }

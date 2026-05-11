@@ -38,3 +38,10 @@ once a stable release is cut.
   longer registers a `clsx` Twig function. The demo's `Alert.twig` was
   rewritten to use plain conditional class concatenation. Anyone who wants
   a class-merging helper can register one on their own Twig environment.
+
+### Fixed
+
+- Static prop values containing apostrophes or backslashes
+  (`<Alert message="It's mine" />`, `<Alert data-path="a\b" />`) no longer
+  produce invalid Twig source. The values are now escaped before being
+  spliced into the generated single-quoted Twig string literal.

@@ -100,9 +100,9 @@ class JSXPreLexer extends Lexer
                         $attributes[] = "'{$key}': true";
                     }
                 } elseif (in_array($key, $this->config['known_props'])) {
-                    $props[] = "'{$key}': '{$value}'";
+                    $props[] = "'{$key}': '" . $this->escapeStaticValue($value) . "'";
                 } else {
-                    $attributes[] = "'{$key}': '{$value}'";
+                    $attributes[] = "'{$key}': '" . $this->escapeStaticValue($value) . "'";
                 }
             }
         }
@@ -110,5 +110,18 @@ class JSXPreLexer extends Lexer
         $props[] = "'{$this->config['attr_name']}': create_attributes({" . implode(', ', $attributes) . "})";
 
         return '{' . implode(', ', $props) . '}';
+    }
+
+    /**
+     * Escape a static attribute value for safe inclusion in a Twig
+     * single-quoted string literal. Backslashes and apostrophes are the
+     * only characters Twig treats specially inside `'...'`.
+     *
+     * Uses {@see strtr()} (not chained `str_replace`) so a replacement
+     * cannot accidentally re-match its own output.
+     */
+    private function escapeStaticValue(string $value): string
+    {
+        return strtr($value, ['\\' => '\\\\', "'" => "\\'"]);
     }
 }

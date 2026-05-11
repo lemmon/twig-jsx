@@ -133,4 +133,28 @@ final class LexerTransformTest extends TestCase
         $input = '{{ greeting }} <p>{% if user %}{{ user.name }}{% endif %}</p>';
         $this->assertSame($input, $this->makeLexer()->transform($input));
     }
+
+    public function testApostropheInStaticPropValueIsEscaped(): void
+    {
+        $this->assertSame(
+            "{% include 'components/Alert.twig' with {'message': 'It\\'s mine', 'attributes': create_attributes({})} %}",
+            $this->makeLexer()->transform('<Alert message="It\'s mine" />')
+        );
+    }
+
+    public function testBackslashInStaticPropValueIsEscaped(): void
+    {
+        $this->assertSame(
+            "{% include 'components/Alert.twig' with {'attributes': create_attributes({'data-path': 'a\\\\b'})} %}",
+            $this->makeLexer()->transform('<Alert data-path="a\\b" />')
+        );
+    }
+
+    public function testApostropheInUnknownStaticAttributeIsEscaped(): void
+    {
+        $this->assertSame(
+            "{% include 'components/Alert.twig' with {'attributes': create_attributes({'aria-label': 'don\\'t'})} %}",
+            $this->makeLexer()->transform('<Alert aria-label="don\'t" />')
+        );
+    }
 }
