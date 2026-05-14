@@ -259,6 +259,14 @@ final class LexerTransformTest extends TestCase
         );
     }
 
+    public function testNamespacedAttributesPassThrough(): void
+    {
+        $this->assertSame(
+            "{% include 'components/Icon.twig' with {'props': create_attributes({'xlink:href': '#icon', 'wire:click': 'save'})} %}",
+            $this->makeLexer()->transform('<Icon xlink:href="#icon" wire:click="save" />'),
+        );
+    }
+
     // ---------------------------------------------------------------------
     // Error paths — the scanner refuses ambiguous syntax loudly.
     // ---------------------------------------------------------------------

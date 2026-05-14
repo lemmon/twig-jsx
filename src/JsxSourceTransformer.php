@@ -484,7 +484,7 @@ final class JsxSourceTransformer
     {
         $slice = substr($this->code, $this->pos, 64);
         $matches = [];
-        if (preg_match('/^[a-zA-Z_][a-zA-Z0-9_-]*/', $slice, $matches) === 1) {
+        if (preg_match('/^[a-zA-Z_][a-zA-Z0-9_:-]*/', $slice, $matches) === 1) {
             return $matches[0];
         }
 
