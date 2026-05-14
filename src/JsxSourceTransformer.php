@@ -39,9 +39,8 @@ final class JsxSourceTransformer
     private readonly string $directory;
     private readonly string $extension;
     private readonly string $prefix;
-    /** @var list<string> */
-    private readonly array $knownProps;
-    private readonly string $attrName;
+    private readonly string $propsVariable;
+    private readonly string $contentBlock;
     private readonly string $tagNamePattern;
 
     /**
@@ -49,8 +48,8 @@ final class JsxSourceTransformer
      *     directory: string,
      *     extension: string,
      *     prefix: string,
-     *     known_props: list<string>,
-     *     attr_name: string,
+     *     props_variable: string,
+     *     content_block: string,
      * } $config
      */
     public function __construct(array $config)
@@ -58,8 +57,8 @@ final class JsxSourceTransformer
         $this->directory = $config['directory'];
         $this->extension = $config['extension'];
         $this->prefix = $config['prefix'];
-        $this->knownProps = $config['known_props'];
-        $this->attrName = $config['attr_name'];
+        $this->propsVariable = $config['props_variable'];
+        $this->contentBlock = $config['content_block'];
 
         $prefixQuoted = preg_quote($this->prefix, '/');
         $this->tagNamePattern = $prefixQuoted === ''
@@ -161,7 +160,7 @@ final class JsxSourceTransformer
             $this->pos++;
             $body = $this->scanUntil($tagName);
             return "{% embed '{$templatePath}' with {$propsCode} %}"
-                . "{% block content %}{$body}{% endblock %}"
+                . "{% block {$this->contentBlock} %}{$body}{% endblock %}"
                 . '{% endembed %}';
         }
 
@@ -174,14 +173,12 @@ final class JsxSourceTransformer
 
     /**
      * Parse zero or more attributes and stop at `/` or `>` (which the
-     * caller then consumes). Returns the full `{...}` props hash string
-     * (already including the trailing `'attributes': create_attributes(...)`
-     * sub-bag).
+     * caller then consumes). Returns a `{props_variable: create_attributes({...})}`
+     * string — a single bag containing every key the caller passed.
      */
     private function parseAttributes(): string
     {
-        $props = [];
-        $attributes = [];
+        $entries = [];
 
         while ($this->pos < $this->len) {
             $this->skipWhitespace();
@@ -196,15 +193,9 @@ final class JsxSourceTransformer
             }
 
             // `{identifier}` shorthand — same name as variable.
-            //
-            // Brace forms (this shorthand and `name={expr}` below) always
-            // route to the props bag, regardless of `known_props` membership.
-            // This preserves the old `:foo` semantic ("this is a real prop")
-            // for one more chunk; #8 erases the asymmetry by sending every
-            // key to a single bag.
             if ($c === '{') {
                 [$key, $expr] = $this->parseBraceShorthand();
-                $props[] = "'{$key}': {$expr}";
+                $entries[] = "'{$key}': {$expr}";
                 continue;
             }
 
@@ -230,31 +221,18 @@ final class JsxSourceTransformer
                 $this->pos++;
                 [$kind, $value] = $this->parseAttributeValue($key);
                 if ($kind === 'string') {
-                    $literal = "'" . $this->escapeStaticValue($value) . "'";
-                    if (in_array($key, $this->knownProps, true)) {
-                        $props[] = "'{$key}': {$literal}";
-                    } else {
-                        $attributes[] = "'{$key}': {$literal}";
-                    }
+                    $entries[] = "'{$key}': '" . $this->escapeStaticValue($value) . "'";
                 } else {
-                    // Brace expression form: always to props (see comment
-                    // on the `{identifier}` shorthand branch above).
-                    $props[] = "'{$key}': {$value}";
+                    $entries[] = "'{$key}': {$value}";
                 }
                 continue;
             }
 
             // Bare attribute → boolean true.
-            if (in_array($key, $this->knownProps, true)) {
-                $props[] = "'{$key}': true";
-            } else {
-                $attributes[] = "'{$key}': true";
-            }
+            $entries[] = "'{$key}': true";
         }
 
-        $props[] = "'{$this->attrName}': create_attributes({" . implode(', ', $attributes) . '})';
-
-        return '{' . implode(', ', $props) . '}';
+        return "{'{$this->propsVariable}': create_attributes({" . implode(', ', $entries) . '})}';
     }
 
     /**

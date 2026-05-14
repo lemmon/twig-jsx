@@ -1,12 +1,10 @@
-<div
-    class="alert alert-{{ type|default('info') }}{% if important|default(false) %} alert-important{% endif %}{% if props.class|default('') %} {{ props.class }}{% endif %}"
-    {{ props.except('class')|render }}
->
-    {% if title is defined %}<strong>{{ title }}</strong>{% endif %}
+{% set type      = props.type|default('info') %}
+{% set important = props.important|default(false) %}
+{% set title     = props.title|default(null) %}
+{% set message   = props.message|default('No message provided.') %}
 
-    <div>
-        {% block content %}
-            {{ message|default('No message provided.') }}
-        {% endblock %}
-    </div>
+<div class="alert alert-{{ type }}{% if important %} alert-important{% endif %}{% if props.class|default('') %} {{ props.class }}{% endif %}"
+     {{ props.except('type', 'important', 'title', 'message', 'class')|render }}>
+    {% if title %}<strong>{{ title }}</strong>{% endif %}
+    {% block content %}{{ message }}{% endblock %}
 </div>

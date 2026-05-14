@@ -29,31 +29,31 @@ final class LexerTransformTest extends TestCase
         return [
             'static prop' => [
                 '<Alert type="info" />',
-                "{% include 'components/Alert.twig' with {'type': 'info', 'attributes': create_attributes({})} %}",
+                "{% include 'components/Alert.twig' with {'props': create_attributes({'type': 'info'})} %}",
             ],
             'dynamic variable prop' => [
                 '<Alert type={userType} />',
-                "{% include 'components/Alert.twig' with {'type': userType, 'attributes': create_attributes({})} %}",
+                "{% include 'components/Alert.twig' with {'props': create_attributes({'type': userType})} %}",
             ],
             'dynamic boolean prop' => [
                 '<Alert important={true} />',
-                "{% include 'components/Alert.twig' with {'important': true, 'attributes': create_attributes({})} %}",
+                "{% include 'components/Alert.twig' with {'props': create_attributes({'important': true})} %}",
             ],
             'shorthand variable prop' => [
                 '<Alert {type} />',
-                "{% include 'components/Alert.twig' with {'type': type, 'attributes': create_attributes({})} %}",
+                "{% include 'components/Alert.twig' with {'props': create_attributes({'type': type})} %}",
             ],
-            'shorthand boolean (known prop)' => [
+            'bare boolean prop' => [
                 '<Alert important />',
-                "{% include 'components/Alert.twig' with {'important': true, 'attributes': create_attributes({})} %}",
+                "{% include 'components/Alert.twig' with {'props': create_attributes({'important': true})} %}",
             ],
             'logic / filter expression' => [
                 '<Alert count={items|length} />',
-                "{% include 'components/Alert.twig' with {'count': items|length, 'attributes': create_attributes({})} %}",
+                "{% include 'components/Alert.twig' with {'props': create_attributes({'count': items|length})} %}",
             ],
             'complex ternary expression' => [
                 "<Alert theme={dark ? 'd' : 'l'} />",
-                "{% include 'components/Alert.twig' with {'theme': dark ? 'd' : 'l', 'attributes': create_attributes({})} %}",
+                "{% include 'components/Alert.twig' with {'props': create_attributes({'theme': dark ? 'd' : 'l'})} %}",
             ],
         ];
     }
@@ -67,40 +67,48 @@ final class LexerTransformTest extends TestCase
     public function testBodiedTagBecomesEmbed(): void
     {
         $this->assertSame(
-            "{% embed 'components/Alert.twig' with {'attributes': create_attributes({})} %}{% block content %}hello{% endblock %}{% endembed %}",
+            "{% embed 'components/Alert.twig' with {'props': create_attributes({})} %}{% block content %}hello{% endblock %}{% endembed %}",
             $this->makeLexer()->transform('<Alert>hello</Alert>')
         );
     }
 
-    public function testUnknownStaticAttributeGoesToAttributesBucket(): void
+    public function testStaticAttributeGoesIntoPropsBag(): void
     {
         $this->assertSame(
-            "{% include 'components/Alert.twig' with {'attributes': create_attributes({'class': 'shadow'})} %}",
+            "{% include 'components/Alert.twig' with {'props': create_attributes({'class': 'shadow'})} %}",
             $this->makeLexer()->transform('<Alert class="shadow" />')
         );
     }
 
-    public function testValuelessUnknownAttributeBecomesBooleanInBucket(): void
+    public function testBareUnknownAttributeBecomesBooleanInPropsBag(): void
     {
         $this->assertSame(
-            "{% include 'components/Alert.twig' with {'attributes': create_attributes({'disabled': true})} %}",
+            "{% include 'components/Alert.twig' with {'props': create_attributes({'disabled': true})} %}",
             $this->makeLexer()->transform('<Alert disabled />')
         );
     }
 
-    public function testKnownAndUnknownPropsAreSeparated(): void
+    public function testAllAttrsGoIntoSinglePropsBag(): void
     {
         $this->assertSame(
-            "{% include 'components/Alert.twig' with {'type': type, 'important': true, 'attributes': create_attributes({'class': 'big'})} %}",
+            "{% include 'components/Alert.twig' with {'props': create_attributes({'type': type, 'important': true, 'class': 'big'})} %}",
             $this->makeLexer()->transform('<Alert {type} important class="big" />')
         );
     }
 
-    public function testAttrNameOptionRenamesAttributesBucket(): void
+    public function testPropsVariableOptionRenamesBag(): void
     {
         $this->assertSame(
-            "{% include 'components/Alert.twig' with {'props': create_attributes({})} %}",
-            $this->makeLexer(['attr_name' => 'props'])->transform('<Alert />')
+            "{% include 'components/Alert.twig' with {'bag': create_attributes({})} %}",
+            $this->makeLexer(['props_variable' => 'bag'])->transform('<Alert />')
+        );
+    }
+
+    public function testContentBlockOptionRenamesBlock(): void
+    {
+        $this->assertSame(
+            "{% embed 'components/Alert.twig' with {'props': create_attributes({})} %}{% block children %}hello{% endblock %}{% endembed %}",
+            $this->makeLexer(['content_block' => 'children'])->transform('<Alert>hello</Alert>')
         );
     }
 
@@ -108,7 +116,7 @@ final class LexerTransformTest extends TestCase
     {
         $lexer = $this->makeLexer(['directory' => 'ui', 'extension' => '.html.twig']);
         $this->assertSame(
-            "{% include 'ui/Alert.html.twig' with {'attributes': create_attributes({})} %}",
+            "{% include 'ui/Alert.html.twig' with {'props': create_attributes({})} %}",
             $lexer->transform('<Alert />')
         );
     }
@@ -117,7 +125,7 @@ final class LexerTransformTest extends TestCase
     {
         $lexer = $this->makeLexer(['prefix' => 'ui:']);
         $this->assertSame(
-            "{% include 'components/Alert.twig' with {'attributes': create_attributes({})} %}",
+            "{% include 'components/Alert.twig' with {'props': create_attributes({})} %}",
             $lexer->transform('<ui:Alert />')
         );
     }
@@ -137,7 +145,7 @@ final class LexerTransformTest extends TestCase
     public function testApostropheInStaticPropValueIsEscaped(): void
     {
         $this->assertSame(
-            "{% include 'components/Alert.twig' with {'message': 'It\\'s mine', 'attributes': create_attributes({})} %}",
+            "{% include 'components/Alert.twig' with {'props': create_attributes({'message': 'It\\'s mine'})} %}",
             $this->makeLexer()->transform('<Alert message="It\'s mine" />')
         );
     }
@@ -145,7 +153,7 @@ final class LexerTransformTest extends TestCase
     public function testBackslashInStaticPropValueIsEscaped(): void
     {
         $this->assertSame(
-            "{% include 'components/Alert.twig' with {'attributes': create_attributes({'data-path': 'a\\\\b'})} %}",
+            "{% include 'components/Alert.twig' with {'props': create_attributes({'data-path': 'a\\\\b'})} %}",
             $this->makeLexer()->transform('<Alert data-path="a\\b" />')
         );
     }
@@ -153,7 +161,7 @@ final class LexerTransformTest extends TestCase
     public function testApostropheInUnknownStaticAttributeIsEscaped(): void
     {
         $this->assertSame(
-            "{% include 'components/Alert.twig' with {'attributes': create_attributes({'aria-label': 'don\\'t'})} %}",
+            "{% include 'components/Alert.twig' with {'props': create_attributes({'aria-label': 'don\\'t'})} %}",
             $this->makeLexer()->transform('<Alert aria-label="don\'t" />')
         );
     }
@@ -190,9 +198,9 @@ final class LexerTransformTest extends TestCase
     public function testSameNameNestedTagsTrackDepthCorrectly(): void
     {
         $this->assertSame(
-            "{% embed 'components/Alert.twig' with {'attributes': create_attributes({})} %}"
+            "{% embed 'components/Alert.twig' with {'props': create_attributes({})} %}"
             . '{% block content %}'
-            . "{% include 'components/Alert.twig' with {'attributes': create_attributes({})} %}"
+            . "{% include 'components/Alert.twig' with {'props': create_attributes({})} %}"
             . '{% endblock %}{% endembed %}',
             $this->makeLexer()->transform('<Alert><Alert /></Alert>'),
         );
@@ -201,7 +209,7 @@ final class LexerTransformTest extends TestCase
     public function testAngleBracketInsideStringAttributeValue(): void
     {
         $this->assertSame(
-            "{% include 'components/Alert.twig' with {'attributes': create_attributes({'data-html': 'a>b'})} %}",
+            "{% include 'components/Alert.twig' with {'props': create_attributes({'data-html': 'a>b'})} %}",
             $this->makeLexer()->transform('<Alert data-html="a>b" />'),
         );
     }
@@ -209,7 +217,7 @@ final class LexerTransformTest extends TestCase
     public function testAngleBracketInsideBraceExpression(): void
     {
         $this->assertSame(
-            "{% include 'components/Alert.twig' with {'cmp': a > b, 'attributes': create_attributes({})} %}",
+            "{% include 'components/Alert.twig' with {'props': create_attributes({'cmp': a > b})} %}",
             $this->makeLexer()->transform('<Alert cmp={a > b} />'),
         );
     }
@@ -217,7 +225,7 @@ final class LexerTransformTest extends TestCase
     public function testTwigOutputInsideBodyIsPassedThrough(): void
     {
         $this->assertSame(
-            "{% embed 'components/Alert.twig' with {'attributes': create_attributes({})} %}"
+            "{% embed 'components/Alert.twig' with {'props': create_attributes({})} %}"
             . '{% block content %}{{- title -}}{% endblock %}{% endembed %}',
             $this->makeLexer()->transform('<Alert>{{- title -}}</Alert>'),
         );
@@ -230,7 +238,7 @@ final class LexerTransformTest extends TestCase
     public function testSingleQuotedStringValueIsAccepted(): void
     {
         $this->assertSame(
-            "{% include 'components/Alert.twig' with {'type': 'info', 'attributes': create_attributes({})} %}",
+            "{% include 'components/Alert.twig' with {'props': create_attributes({'type': 'info'})} %}",
             $this->makeLexer()->transform("<Alert type='info' />"),
         );
     }
@@ -238,7 +246,7 @@ final class LexerTransformTest extends TestCase
     public function testNestedBraceHashInsideExpression(): void
     {
         $this->assertSame(
-            "{% include 'components/Alert.twig' with {'cfg': {dark: true, fast: false}, 'attributes': create_attributes({})} %}",
+            "{% include 'components/Alert.twig' with {'props': create_attributes({'cfg': {dark: true, fast: false}})} %}",
             $this->makeLexer()->transform('<Alert cfg={ {dark: true, fast: false} } />'),
         );
     }
@@ -246,7 +254,7 @@ final class LexerTransformTest extends TestCase
     public function testClosingBraceInsideStringInsideExpression(): void
     {
         $this->assertSame(
-            "{% include 'components/Alert.twig' with {'pattern': 'a}b', 'attributes': create_attributes({})} %}",
+            "{% include 'components/Alert.twig' with {'props': create_attributes({'pattern': 'a}b'})} %}",
             $this->makeLexer()->transform("<Alert pattern={'a}b'} />"),
         );
     }

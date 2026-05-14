@@ -18,11 +18,11 @@ class JSXPreLexer extends Lexer
         parent::__construct($env);
 
         $this->config = array_merge([
-            'directory'   => 'components',
-            'extension'   => '.twig',
-            'prefix'      => '',
-            'known_props' => ['title', 'message', 'type', 'important'],
-            'attr_name'   => 'attributes',
+            'directory'      => 'components',
+            'extension'      => '.twig',
+            'prefix'         => '',
+            'props_variable' => 'props',
+            'content_block'  => 'content',
         ], $options);
     }
 

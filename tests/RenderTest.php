@@ -31,9 +31,9 @@ final class RenderTest extends TestCase
     public function testStaticPropsRender(): void
     {
         $twig = $this->makeTwig([
-            'components/Alert.twig' => '<div class="alert alert-{{ type|default("info") }}">'
-                . '{% if title is defined %}<strong>{{ title }}</strong>{% endif %}'
-                . '{% block content %}{{ message|default("") }}{% endblock %}'
+            'components/Alert.twig' => '<div class="alert alert-{{ props.type|default("info") }}">'
+                . '{% if props.title is defined %}<strong>{{ props.title }}</strong>{% endif %}'
+                . '{% block content %}{{ props.message|default("") }}{% endblock %}'
                 . '</div>',
             'page' => '<Alert title="Hello" message="World" />',
         ]);
@@ -47,7 +47,7 @@ final class RenderTest extends TestCase
     public function testDynamicPropResolvesFromContext(): void
     {
         $twig = $this->makeTwig([
-            'components/Alert.twig' => '<div class="alert-{{ type }}">{% block content %}{{ message }}{% endblock %}</div>',
+            'components/Alert.twig' => '<div class="alert-{{ props.type }}">{% block content %}{{ props.message }}{% endblock %}</div>',
             'page' => '<Alert {type} message="hi" />',
         ]);
 
@@ -57,10 +57,10 @@ final class RenderTest extends TestCase
         );
     }
 
-    public function testShorthandBooleanForKnownProp(): void
+    public function testShorthandBooleanPropRenders(): void
     {
         $twig = $this->makeTwig([
-            'components/Alert.twig' => '<div>{{ important ? "yes" : "no" }}</div>',
+            'components/Alert.twig' => '<div>{{ props.important ? "yes" : "no" }}</div>',
             'page' => '<Alert important />',
         ]);
 
@@ -77,10 +77,20 @@ final class RenderTest extends TestCase
         $this->assertSame('<div>[<p>child</p>]</div>', $twig->render('page'));
     }
 
-    public function testHtmlAttributesArePassedThroughViaAttributesBucket(): void
+    public function testContentBlockOptionRendersIntoCustomBlock(): void
     {
         $twig = $this->makeTwig([
-            'components/Alert.twig' => '<div {{ attributes|render }}>x</div>',
+            'components/Box.twig' => '<div>[{% block children %}{% endblock %}]</div>',
+            'page' => '<Box><p>child</p></Box>',
+        ], ['content_block' => 'children']);
+
+        $this->assertSame('<div>[<p>child</p>]</div>', $twig->render('page'));
+    }
+
+    public function testHtmlAttributesArePassedThroughViaPropsBag(): void
+    {
+        $twig = $this->makeTwig([
+            'components/Alert.twig' => '<div {{ props|render }}>x</div>',
             'page' => '<Alert class="shadow" data-id="42" />',
         ]);
 
@@ -93,17 +103,17 @@ final class RenderTest extends TestCase
     public function testValuelessUnknownAttributeRendersAsHtmlBoolean(): void
     {
         $twig = $this->makeTwig([
-            'components/Alert.twig' => '<button {{ attributes|render }}>x</button>',
+            'components/Alert.twig' => '<button {{ props|render }}>x</button>',
             'page' => '<Alert disabled />',
         ]);
 
         $this->assertSame('<button disabled>x</button>', $twig->render('page'));
     }
 
-    public function testExceptRemovesAttributeFromBucket(): void
+    public function testExceptRemovesKeyFromPropsBag(): void
     {
         $twig = $this->makeTwig([
-            'components/Alert.twig' => '<div class="own {{ attributes.class }}" {{ attributes.except("class")|render }}>x</div>',
+            'components/Alert.twig' => '<div class="own {{ props.class }}" {{ props.except("class")|render }}>x</div>',
             'page' => '<Alert class="extra" data-id="42" />',
         ]);
 
@@ -116,7 +126,7 @@ final class RenderTest extends TestCase
     public function testApostropheInStaticPropValueRendersCorrectly(): void
     {
         $twig = $this->makeTwig([
-            'components/Alert.twig' => '<p>{{ message }}</p>',
+            'components/Alert.twig' => '<p>{{ props.message }}</p>',
             'page' => '<Alert message="It\'s mine" />',
         ]);
 
@@ -126,7 +136,7 @@ final class RenderTest extends TestCase
     public function testBackslashInStaticAttributeRendersCorrectly(): void
     {
         $twig = $this->makeTwig([
-            'components/Alert.twig' => '<a {{ attributes|render }}>x</a>',
+            'components/Alert.twig' => '<a {{ props|render }}>x</a>',
             'page' => '<Alert data-path="a\\b" />',
         ]);
 
@@ -136,7 +146,7 @@ final class RenderTest extends TestCase
     public function testBraceExpressionPropRenders(): void
     {
         $twig = $this->makeTwig([
-            'components/Alert.twig' => '<div>{{ message }}</div>',
+            'components/Alert.twig' => '<div>{{ props.message }}</div>',
             'page' => '<Alert message={items|length} />',
         ]);
 

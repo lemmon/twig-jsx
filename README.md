@@ -18,17 +18,15 @@ This project transforms modern, HTML-like component tags into native Twig `{% in
 Save your component in `templates/components/Alert.twig`:
 
 ```twig
-<div
-    class="alert alert-{{ type|default('info') }}{% if important|default(false) %} alert-important{% endif %}{% if props.class|default('') %} {{ props.class }}{% endif %}"
-    {{ props.except('class')|render }}
->
-    {% if title is defined %}<strong>{{ title }}</strong>{% endif %}
+{% set type      = props.type|default('info') %}
+{% set important = props.important|default(false) %}
+{% set title     = props.title|default(null) %}
+{% set message   = props.message|default('No message provided.') %}
 
-    <div>
-        {% block content %}
-            {{ message|default('No message provided.') }}
-        {% endblock %}
-    </div>
+<div class="alert alert-{{ type }}{% if important %} alert-important{% endif %}{% if props.class|default('') %} {{ props.class }}{% endif %}"
+     {{ props.except('type', 'important', 'title', 'message', 'class')|render }}>
+    {% if title %}<strong>{{ title }}</strong>{% endif %}
+    {% block content %}{{ message }}{% endblock %}
 </div>
 ```
 
@@ -43,15 +41,13 @@ $twig = new \Twig\Environment($loader);
 $twig->addExtension(new AttributeExtension());
 
 // 2. Register the Lexer
-$twig->setLexer(new JSXPreLexer($twig, [
-    'attr_name' => 'props'
-]));
+$twig->setLexer(new JSXPreLexer($twig));
 ```
 
 ### 3. Use it in a Template
 ```twig
 <!-- Self-closing with shorthand -->
-<Alert :type important message="Everything is great!" />
+<Alert {type} important message="Everything is great!" />
 
 <!-- With children and extra attributes -->
 <Alert type="warning" class="shadow-lg" data-id="123">
@@ -61,15 +57,14 @@ $twig->setLexer(new JSXPreLexer($twig, [
 
 ## Prop Types
 
-| Syntax | Example | Twig Equivalent | Result |
-| :--- | :--- | :--- | :--- |
-| **Static** | `type="info"` | `'type': 'info'` | String |
-| **Variable**| `:type="userType"` | `'type': userType` | Value of `$userType` |
-| **Boolean** | `:important="true"`| `'important': true` | Boolean `true` |
-| **Shorthand Var** | `:type` | `'type': type` | Passes `$type` variable |
-| **Shorthand Bool**| `important` | `'important': true`| Boolean `true` |
-| **Logic**   | `:count="items\|length"` | `'count': items\|length` | Integer |
-| **Complex** | `:theme="dark ? 'd' : 'l'"` | `'theme': dark ? 'd' : 'l'` | Expression result |
+| Syntax | Example | Compiles to (inside `props` bag) |
+| :--- | :--- | :--- |
+| **Static** | `type="info"` | `'type': 'info'` |
+| **Expression** | `type={userType}` | `'type': userType` |
+| **Expression** | `count={items\|length}` | `'count': items\|length` |
+| **Expression** | `theme={dark ? 'd' : 'l'}` | `'theme': dark ? 'd' : 'l'` |
+| **Shorthand** | `{type}` | `'type': type` |
+| **Boolean** | `important` | `'important': true` |
 
 ## Configuration Options
 
@@ -78,8 +73,28 @@ $twig->setLexer(new JSXPreLexer($twig, [
 | `directory` | `components` | The subdirectory where component templates are stored. |
 | `extension` | `.twig` | The file extension of the component templates. |
 | `prefix` | `""` | Optional tag prefix. If empty, matches Capitalized tags (JSX-style). |
-| `known_props`| `['title', 'message', 'type', 'important']` | Props passed as variables instead of being added to the bucket. |
-| `attr_name` | `attributes` | The name of the variable that holds leftover HTML attributes. |
+| `props_variable` | `props` | The name of the variable that holds all props in the component template. |
+| `content_block` | `content` | The Twig block name where a bodied tag's children are rendered. |
+
+## How a Component Reads Its Inputs
+
+Every prop the caller passes — semantic inputs and HTML attributes alike — arrives in a single
+`props` bag of type `ComponentAttributes`. The component template decides what to extract:
+
+```twig
+{# Destructure semantic inputs as locals #}
+{% set type    = props.type|default('info') %}
+{% set message = props.message|default('') %}
+
+{# Spread the remaining keys as HTML attributes #}
+<div class="alert-{{ type }}" {{ props.except('type', 'message')|render }}>
+    {{ message }}
+</div>
+```
+
+- `props.key` — read any value
+- `props.except('a', 'b', ...)` — returns a new bag without the listed keys, useful for spreading leftovers onto an element
+- `{{ props|render }}` — renders all entries as HTML attribute pairs
 
 ## Installation
 ```bash

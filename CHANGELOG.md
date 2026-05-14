@@ -8,6 +8,26 @@ once a stable release is cut.
 
 ## [Unreleased]
 
+### Changed
+
+- **All props now route to a single bag.** Every key the caller passes —
+  semantic inputs and HTML fallthrough — arrives in one `ComponentAttributes`
+  object (default variable name `props`). The `known_props` routing rule is
+  removed; the component template owns the decision of what is a semantic
+  input versus a passthrough attribute. Destructure with
+  `{% set type = props.type %}` and spread leftovers with
+  `{{ props.except('type', ...)|render }}`.
+- Config option `attr_name` renamed to `props_variable`; default changed from
+  `'attributes'` to `'props'`. Update your `JSXPreLexer` constructor if you
+  were passing `attr_name`.
+- New config option `content_block` (default `'content'`) — the name of the
+  Twig block where a bodied tag's children are rendered. Override at lexer
+  init if you prefer `children`, `slot`, etc.
+
+### Removed
+
+- `known_props` config option removed. All props go into the single bag.
+
 ### Added
 
 - `LICENSE` file (MIT).

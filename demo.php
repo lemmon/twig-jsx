@@ -16,9 +16,7 @@ $twig = new Environment($loader, [
 
 $twig->addExtension(new AttributeExtension());
 
-$twig->setLexer(new JSXPreLexer($twig, [
-    'attr_name' => 'props',
-]));
+$twig->setLexer(new JSXPreLexer($twig));
 
 // 2. Define some test data
 $data = [
