@@ -1,0 +1,79 @@
+# Twig JSX
+
+> JSX-like component syntax for Twig. Transforms `<Alert {type} important />` into native Twig `{% include %}`/`{% embed %}` calls at the lexer level. Zero dependencies, no runtime overhead.
+
+## Not Supported
+
+This library is a shortcut for the common case — props in, single content block out. The following are explicit non-goals; use plain Twig instead:
+
+- **Multi-slot / named slots**: use `{% embed %}` with multiple `{% block %}` overrides
+- **PHP-side component classes**: use Symfony UX TwigComponent
+- **Component lifecycle, reactive state, or runtime behavior**: this is a source rewriter with no runtime
+- **Two-way binding or event handlers**: there is no client-side layer
+
+## Call-site Syntax
+
+All four forms compile into a single `props` bag inside the component template.
+
+```twig
+<Alert type="info" />           {# static string #}
+<Alert type={userType} />       {# Twig expression #}
+<Alert {type} />                {# shorthand — equivalent to type={type} #}
+<Alert important />             {# bare boolean — equivalent to important={true} #}
+```
+
+Old `:foo="expr"` syntax is rejected with a `SyntaxError`.
+
+## Component-side Contract
+
+Every prop arrives in a single `ComponentAttributes` bag named `props` by default.
+
+```twig
+{# Destructure semantic inputs #}
+{% set type    = props.type|default('info') %}
+{% set message = props.message|default('') %}
+
+{# Spread remaining keys as HTML attributes #}
+<div class="alert-{{ type }}" {{ props.except('type', 'message')|render }}>
+    {% block content %}{{ message }}{% endblock %}
+</div>
+```
+
+- `props.key` — read any value
+- `props.except('a', 'b')` — new bag without listed keys; for HTML fallthrough
+- `{{ props|render }}` — renders all entries as `key="value"` attribute pairs
+
+Bodied tags render children into a Twig block:
+
+```twig
+<Alert type="warning">Some <strong>content</strong></Alert>
+{# compiles to: {% embed ... %}{% block content %}Some <strong>content</strong>{% endblock %}{% endembed %} #}
+```
+
+## Setup
+
+```php
+use Lemmon\TwigJsx\JSXPreLexer;
+use Lemmon\TwigJsx\AttributeExtension;
+
+$twig = new \Twig\Environment($loader);
+$twig->addExtension(new AttributeExtension());
+$twig->setLexer(new JSXPreLexer($twig));
+```
+
+## Configuration
+
+| Option | Default | Description |
+|---|---|---|
+| `directory` | `components` | Subdirectory inside `templates/` where component files are looked up |
+| `extension` | `.twig` | File extension for component templates |
+| `prefix` | `""` | Tag prefix; when empty, any Capitalized tag is treated as a component |
+| `props_variable` | `props` | Variable name for the props bag inside the component template |
+| `content_block` | `content` | Twig block name where bodied tag children are rendered |
+
+Pass options as the second argument: `new JSXPreLexer($twig, ['props_variable' => 'inputs'])`.
+
+## Further Reading
+
+- [README](README.md) — full documentation with Quick Start and examples
+- [CHANGELOG](CHANGELOG.md) — version history and migration notes

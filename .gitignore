@@ -9,10 +9,8 @@ Thumbs.db
 /.idea/
 /.vscode/
 /.cursor/
+/.claude/
 
 # Tooling caches
 /.phpunit.cache/
 .phpunit.result.cache
-
-# Local working notes (not meant for the repo)
-/reports/

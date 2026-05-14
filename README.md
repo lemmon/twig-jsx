@@ -1,20 +1,40 @@
 # Twig JSX
 
-A lightweight, zero-dependency implementation of JSX-like component syntax for Twig.
+JSX-like component syntax for Twig.
 
-This project transforms modern, HTML-like component tags into native Twig `{% include %}` and `{% embed %}` calls.
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![PHP](https://img.shields.io/badge/php-%5E8.1-blue)](https://php.net)
+[![Twig](https://img.shields.io/badge/twig-%5E3.0-green)](https://twig.symfony.com)
+[![CI](https://github.com/lemmon/twig-jsx/actions/workflows/ci.yml/badge.svg)](https://github.com/lemmon/twig-jsx/actions/workflows/ci.yml)
 
-## Features
+Write `<Alert {type} important />` instead of a verbose `{% include %}` call. Twig JSX transforms JSX-like component tags into native Twig `{% include %}` and `{% embed %}` calls at the lexer level — no runtime overhead, no Symfony dependency.
 
-- **JSX Syntax**: Use `<ComponentName />` instead of verbose Twig functions.
-- **Static Props**: Pass strings directly via `label="Click Me"`.
-- **Dynamic Props**: Pass variables or complex Twig expressions using the `:` prefix.
-- **Shorthands**: Support for `:type` (variable) and `important` (boolean) shorthands.
-- **Smart Props**: General HTML attributes are collected into a smart object that can be easily rendered.
+## Requirements
 
-## Example Usage
+- PHP `^8.1`
+- Twig `^3.0`
 
-### 1. Create a Component
+## Installation
+
+```bash
+composer require lemmon/twig-jsx
+```
+
+## Quick Start
+
+### 1. Register the Extension and Lexer
+
+```php
+use Lemmon\TwigJsx\JSXPreLexer;
+use Lemmon\TwigJsx\AttributeExtension;
+
+$twig = new \Twig\Environment($loader);
+$twig->addExtension(new AttributeExtension());
+$twig->setLexer(new JSXPreLexer($twig));
+```
+
+### 2. Create a Component
+
 Save your component in `templates/components/Alert.twig`:
 
 ```twig
@@ -30,21 +50,8 @@ Save your component in `templates/components/Alert.twig`:
 </div>
 ```
 
-### 2. Register the Lexer and Extension
-```php
-use Lemmon\TwigJsx\JSXPreLexer;
-use Lemmon\TwigJsx\AttributeExtension;
+### 3. Use It in a Template
 
-$twig = new \Twig\Environment($loader);
-
-// 1. Register the extension (required for props rendering)
-$twig->addExtension(new AttributeExtension());
-
-// 2. Register the Lexer
-$twig->setLexer(new JSXPreLexer($twig));
-```
-
-### 3. Use it in a Template
 ```twig
 <!-- Self-closing with shorthand -->
 <Alert {type} important message="Everything is great!" />
@@ -55,7 +62,7 @@ $twig->setLexer(new JSXPreLexer($twig));
 </Alert>
 ```
 
-## Prop Types
+## Prop Syntax
 
 | Syntax | Example | Compiles to (inside `props` bag) |
 | :--- | :--- | :--- |
@@ -65,16 +72,6 @@ $twig->setLexer(new JSXPreLexer($twig));
 | **Expression** | `theme={dark ? 'd' : 'l'}` | `'theme': dark ? 'd' : 'l'` |
 | **Shorthand** | `{type}` | `'type': type` |
 | **Boolean** | `important` | `'important': true` |
-
-## Configuration Options
-
-| Option | Default | Description |
-| :--- | :--- | :--- |
-| `directory` | `components` | The subdirectory where component templates are stored. |
-| `extension` | `.twig` | The file extension of the component templates. |
-| `prefix` | `""` | Optional tag prefix. If empty, matches Capitalized tags (JSX-style). |
-| `props_variable` | `props` | The name of the variable that holds all props in the component template. |
-| `content_block` | `content` | The Twig block name where a bodied tag's children are rendered. |
 
 ## How a Component Reads Its Inputs
 
@@ -93,26 +90,28 @@ Every prop the caller passes — semantic inputs and HTML attributes alike — a
 ```
 
 - `props.key` — read any value
-- `props.except('a', 'b', ...)` — returns a new bag without the listed keys, useful for spreading leftovers onto an element
+- `props.except('a', 'b', ...)` — returns a new bag without the listed keys; useful for spreading HTML fallthrough attributes onto the root element
 - `{{ props|render }}` — renders all entries as HTML attribute pairs
 
-## Installation
-```bash
-composer require lemmon/twig-jsx
-```
+## Configuration
 
-## Comparison & Inspiration
+| Option | Default | Description |
+| :--- | :--- | :--- |
+| `directory` | `components` | Subdirectory inside `templates/` where component files are looked up. |
+| `extension` | `.twig` | File extension for component templates. |
+| `prefix` | `""` | Tag prefix. When empty, any Capitalized tag is treated as a component (JSX-style). |
+| `props_variable` | `props` | Name of the variable that holds all props in the component template. |
+| `content_block` | `content` | Twig block name where a bodied tag's children are rendered. |
 
-This library was inspired by the modern component movement in the JavaScript ecosystem (React, Vue, Svelte) and existing Twig component implementations.
+## Alternatives
 
-| Feature | [Symfony UX](https://symfony.com/bundles/ux-twig-component/current/index.html) | [TwigX](https://github.com/alma-oss/twigx-bundle) | **Twig JSX** |
-| :--- | :--- | :--- | :--- |
-| **Dependencies** | High (Symfony Bundle) | Moderate (Symfony Config/DI) | **Zero** (Standalone) |
-| **Syntax** | `<twig:Alert />` | `<Alert />` | **`<Alert />`** |
-| **Shorthands** | No (`:type="type"`) | No | **Yes (`:type`, `important`)** |
-| **Philosophy** | PHP-centric (Classes) | Template-centric | **Modern DX (JSX-like)** |
+- [Symfony UX Twig Component](https://symfony.com/bundles/ux-twig-component/current/index.html) — PHP class-backed components; requires the Symfony UX bundle.
+- [TwigX](https://github.com/alma-oss/twigx-bundle) — similar `<Component />` syntax as a Symfony bundle; requires Symfony Config and DI.
 
-### Why use this over others?
-- **Zero-Dependency**: Most other libraries are tightly coupled to the Symfony Framework or its specific components. `twig-jsx` is a single-class transformer that works in any Twig environment.
-- **Modern Shorthands**: We support `:variable` and `boolean-prop` shorthands natively, bringing the developer experience closer to Vue 3.4 or Svelte.
-- **Lightweight**: It doesn't require PHP Component classes, though it works perfectly alongside them if you choose to implement your own loader logic.
+## Contributing
+
+Bug reports and pull requests are welcome on [GitHub](https://github.com/lemmon/twig-jsx).
+
+## License
+
+MIT. See [LICENSE](LICENSE).
