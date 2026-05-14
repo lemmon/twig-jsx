@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Lemmon\TwigJsx;
 
 use Twig\Extension\AbstractExtension;
-use Twig\TwigFunction;
 use Twig\TwigFilter;
+use Twig\TwigFunction;
 
 class AttributeExtension extends AbstractExtension
 {

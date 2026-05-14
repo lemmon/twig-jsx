@@ -1,0 +1,39 @@
+# mago 1.27.1
+php-version = "8.1.0"
+
+[source]
+paths = ["src", "tests"]
+excludes = ["vendor"]
+
+[formatter]
+print-width = 120
+tab-width = 4
+use-tabs = false
+trailing-comma = true
+preserve-breaking-member-access-chain = true
+preserve-breaking-argument-list = true
+preserve-breaking-array-like = true
+preserve-breaking-parameter-list = true
+preserve-breaking-attribute-list = true
+
+[linter.rules]
+# PSR naming rules add no value for a single-package lib with no interfaces/traits
+interface-name = { psr = false }
+trait-name = { psr = false }
+class-name = { psr = false }
+# These rules fire on scanner code with unavoidable structural patterns,
+# or on third-party concerns (password literals, insecure comparisons)
+literal-named-argument = { enabled = false }
+too-many-methods = { enabled = false }
+cyclomatic-complexity = { enabled = false }
+tagged-todo = { enabled = false }
+no-boolean-flag-parameter = { enabled = false }
+no-insecure-comparison = { enabled = false }
+no-literal-password = { enabled = false }
+kan-defect = { enabled = false }
+halstead = { enabled = false }
+
+[analyzer]
+# PHPUnit test-helper methods (makeLexer, makeTwig) are valid callers but mago
+# flags them as unused because TestCase (vendor) is outside the source path.
+find-unused-definitions = false

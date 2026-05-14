@@ -31,16 +31,17 @@ final class RenderTest extends TestCase
     public function testStaticPropsRender(): void
     {
         $twig = $this->makeTwig([
-            'components/Alert.twig' => '<div class="alert alert-{{ props.type|default("info") }}">'
-                . '{% if props.title is defined %}<strong>{{ props.title }}</strong>{% endif %}'
-                . '{% block content %}{{ props.message|default("") }}{% endblock %}'
-                . '</div>',
+            'components/Alert.twig' =>
+                '<div class="alert alert-{{ props.type|default("info") }}">'
+                    . '{% if props.title is defined %}<strong>{{ props.title }}</strong>{% endif %}'
+                    . '{% block content %}{{ props.message|default("") }}{% endblock %}'
+                    . '</div>',
             'page' => '<Alert title="Hello" message="World" />',
         ]);
 
         $this->assertSame(
             '<div class="alert alert-info"><strong>Hello</strong>World</div>',
-            $twig->render('page')
+            $twig->render('page'),
         );
     }
 
@@ -53,7 +54,7 @@ final class RenderTest extends TestCase
 
         $this->assertSame(
             '<div class="alert-success">hi</div>',
-            $twig->render('page', ['type' => 'success'])
+            $twig->render('page', ['type' => 'success']),
         );
     }
 
@@ -96,7 +97,7 @@ final class RenderTest extends TestCase
 
         $this->assertSame(
             '<div class="shadow" data-id="42">x</div>',
-            $twig->render('page')
+            $twig->render('page'),
         );
     }
 
@@ -119,7 +120,7 @@ final class RenderTest extends TestCase
 
         $this->assertSame(
             '<div class="own extra" data-id="42">x</div>',
-            $twig->render('page')
+            $twig->render('page'),
         );
     }
 

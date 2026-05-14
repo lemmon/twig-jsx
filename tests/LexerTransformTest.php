@@ -68,7 +68,7 @@ final class LexerTransformTest extends TestCase
     {
         $this->assertSame(
             "{% embed 'components/Alert.twig' with {'props': create_attributes({})} %}{% block content %}hello{% endblock %}{% endembed %}",
-            $this->makeLexer()->transform('<Alert>hello</Alert>')
+            $this->makeLexer()->transform('<Alert>hello</Alert>'),
         );
     }
 
@@ -76,7 +76,7 @@ final class LexerTransformTest extends TestCase
     {
         $this->assertSame(
             "{% include 'components/Alert.twig' with {'props': create_attributes({'class': 'shadow'})} %}",
-            $this->makeLexer()->transform('<Alert class="shadow" />')
+            $this->makeLexer()->transform('<Alert class="shadow" />'),
         );
     }
 
@@ -84,7 +84,7 @@ final class LexerTransformTest extends TestCase
     {
         $this->assertSame(
             "{% include 'components/Alert.twig' with {'props': create_attributes({'disabled': true})} %}",
-            $this->makeLexer()->transform('<Alert disabled />')
+            $this->makeLexer()->transform('<Alert disabled />'),
         );
     }
 
@@ -92,7 +92,7 @@ final class LexerTransformTest extends TestCase
     {
         $this->assertSame(
             "{% include 'components/Alert.twig' with {'props': create_attributes({'type': type, 'important': true, 'class': 'big'})} %}",
-            $this->makeLexer()->transform('<Alert {type} important class="big" />')
+            $this->makeLexer()->transform('<Alert {type} important class="big" />'),
         );
     }
 
@@ -100,7 +100,7 @@ final class LexerTransformTest extends TestCase
     {
         $this->assertSame(
             "{% include 'components/Alert.twig' with {'bag': create_attributes({})} %}",
-            $this->makeLexer(['props_variable' => 'bag'])->transform('<Alert />')
+            $this->makeLexer(['props_variable' => 'bag'])->transform('<Alert />'),
         );
     }
 
@@ -108,7 +108,7 @@ final class LexerTransformTest extends TestCase
     {
         $this->assertSame(
             "{% embed 'components/Alert.twig' with {'props': create_attributes({})} %}{% block children %}hello{% endblock %}{% endembed %}",
-            $this->makeLexer(['content_block' => 'children'])->transform('<Alert>hello</Alert>')
+            $this->makeLexer(['content_block' => 'children'])->transform('<Alert>hello</Alert>'),
         );
     }
 
@@ -117,7 +117,7 @@ final class LexerTransformTest extends TestCase
         $lexer = $this->makeLexer(['directory' => 'ui', 'extension' => '.html.twig']);
         $this->assertSame(
             "{% include 'ui/Alert.html.twig' with {'props': create_attributes({})} %}",
-            $lexer->transform('<Alert />')
+            $lexer->transform('<Alert />'),
         );
     }
 
@@ -126,7 +126,7 @@ final class LexerTransformTest extends TestCase
         $lexer = $this->makeLexer(['prefix' => 'ui:']);
         $this->assertSame(
             "{% include 'components/Alert.twig' with {'props': create_attributes({})} %}",
-            $lexer->transform('<ui:Alert />')
+            $lexer->transform('<ui:Alert />'),
         );
     }
 
@@ -146,7 +146,7 @@ final class LexerTransformTest extends TestCase
     {
         $this->assertSame(
             "{% include 'components/Alert.twig' with {'props': create_attributes({'message': 'It\\'s mine'})} %}",
-            $this->makeLexer()->transform('<Alert message="It\'s mine" />')
+            $this->makeLexer()->transform('<Alert message="It\'s mine" />'),
         );
     }
 
@@ -154,7 +154,7 @@ final class LexerTransformTest extends TestCase
     {
         $this->assertSame(
             "{% include 'components/Alert.twig' with {'props': create_attributes({'data-path': 'a\\\\b'})} %}",
-            $this->makeLexer()->transform('<Alert data-path="a\\b" />')
+            $this->makeLexer()->transform('<Alert data-path="a\\b" />'),
         );
     }
 
@@ -162,7 +162,7 @@ final class LexerTransformTest extends TestCase
     {
         $this->assertSame(
             "{% include 'components/Alert.twig' with {'props': create_attributes({'aria-label': 'don\\'t'})} %}",
-            $this->makeLexer()->transform('<Alert aria-label="don\'t" />')
+            $this->makeLexer()->transform('<Alert aria-label="don\'t" />'),
         );
     }
 

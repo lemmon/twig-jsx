@@ -61,9 +61,7 @@ final class JsxSourceTransformer
         $this->contentBlock = $config['content_block'];
 
         $prefixQuoted = preg_quote($this->prefix, '/');
-        $this->tagNamePattern = $prefixQuoted === ''
-            ? '[A-Z][a-zA-Z0-9]*'
-            : $prefixQuoted . '[a-zA-Z0-9]+';
+        $this->tagNamePattern = $prefixQuoted === '' ? '[A-Z][a-zA-Z0-9]*' : $prefixQuoted . '[a-zA-Z0-9]+';
     }
 
     public function transform(string $code): string
@@ -159,9 +157,11 @@ final class JsxSourceTransformer
         if ($this->pos < $this->len && $this->code[$this->pos] === '>') {
             $this->pos++;
             $body = $this->scanUntil($tagName);
-            return "{% embed '{$templatePath}' with {$propsCode} %}"
+            return (
+                "{% embed '{$templatePath}' with {$propsCode} %}"
                 . "{% block {$this->contentBlock} %}{$body}{% endblock %}"
-                . '{% endembed %}';
+                . '{% endembed %}'
+            );
         }
 
         throw new SyntaxError(sprintf(
@@ -203,7 +203,7 @@ final class JsxSourceTransformer
             if ($c === ':') {
                 throw new SyntaxError(
                     "The ':foo' attribute syntax is no longer supported; "
-                    . "use foo={expression} for expressions, {foo} for shorthand, "
+                    . 'use foo={expression} for expressions, {foo} for shorthand, '
                     . 'or foo="literal" for static strings.',
                 );
             }
@@ -220,11 +220,9 @@ final class JsxSourceTransformer
             if ($this->pos < $this->len && $this->code[$this->pos] === '=') {
                 $this->pos++;
                 [$kind, $value] = $this->parseAttributeValue($key);
-                if ($kind === 'string') {
-                    $entries[] = "'{$key}': '" . $this->escapeStaticValue($value) . "'";
-                } else {
-                    $entries[] = "'{$key}': {$value}";
-                }
+                $entries[] = $kind === 'string'
+                    ? "'{$key}': '" . $this->escapeStaticValue($value) . "'"
+                    : "'{$key}': {$value}";
                 continue;
             }
 
@@ -253,8 +251,7 @@ final class JsxSourceTransformer
         if ($identifier === null) {
             $this->pos = $start;
             throw new SyntaxError(
-                "Expected '{identifier}' shorthand; for an expression value, "
-                . 'use name={expression} instead.',
+                "Expected '{identifier}' shorthand; for an expression value, " . 'use name={expression} instead.',
             );
         }
         $this->pos += strlen($identifier);
@@ -314,7 +311,7 @@ final class JsxSourceTransformer
         }
 
         throw new SyntaxError(sprintf(
-            "Unquoted attribute values are not supported; use %s=\"literal\" or %s={expression}.",
+            'Unquoted attribute values are not supported; use %s="literal" or %s={expression}.',
             $forAttribute,
             $forAttribute,
         ));
@@ -340,7 +337,11 @@ final class JsxSourceTransformer
 
             if ($c === '{') {
                 $depth++;
-            } elseif ($c === '}') {
+                $this->pos++;
+                continue;
+            }
+
+            if ($c === '}') {
                 $depth--;
                 if ($depth === 0) {
                     $expr = substr($this->code, $start, $this->pos - $start);
@@ -424,7 +425,7 @@ final class JsxSourceTransformer
         $this->pos++; // opening quote
         while ($this->pos < $this->len) {
             $c = $this->code[$this->pos];
-            if ($c === '\\' && $this->pos + 1 < $this->len) {
+            if ($c === '\\' && ($this->pos + 1) < $this->len) {
                 $this->pos += 2;
                 continue;
             }
@@ -460,8 +461,9 @@ final class JsxSourceTransformer
             return null;
         }
         $slice = substr($this->code, $offset, 64);
-        if (preg_match('/^(' . $this->tagNamePattern . ')\b/', $slice, $m) === 1) {
-            return $m[1];
+        $matches = [];
+        if (preg_match('/^(' . $this->tagNamePattern . ')\b/', $slice, $matches) === 1) {
+            return $matches[1];
         }
 
         return null;
@@ -470,8 +472,9 @@ final class JsxSourceTransformer
     private function matchIdentifier(): ?string
     {
         $slice = substr($this->code, $this->pos, 64);
-        if (preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*/', $slice, $m) === 1) {
-            return $m[0];
+        $matches = [];
+        if (preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*/', $slice, $matches) === 1) {
+            return $matches[0];
         }
 
         return null;
@@ -480,8 +483,9 @@ final class JsxSourceTransformer
     private function matchAttributeName(): ?string
     {
         $slice = substr($this->code, $this->pos, 64);
-        if (preg_match('/^[a-zA-Z_][a-zA-Z0-9_-]*/', $slice, $m) === 1) {
-            return $m[0];
+        $matches = [];
+        if (preg_match('/^[a-zA-Z_][a-zA-Z0-9_-]*/', $slice, $matches) === 1) {
+            return $matches[0];
         }
 
         return null;

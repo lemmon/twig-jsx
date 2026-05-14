@@ -8,6 +8,22 @@ once a stable release is cut.
 
 ## [Unreleased]
 
+### Added
+
+- Mago static analysis toolchain (`carthage-software/mago ^1.27`):
+  - `composer fmt` — reformat `src/` and `tests/` in place
+  - `composer lint` — lint the same paths
+  - `composer analyze` — static analysis (informational; vendor-class stubs
+    are not bundled, so some false-positive `non-existent-class` findings from
+    Twig/PHPUnit are expected when run locally)
+  - `mago.toml` at the project root pins the formatter style and disables rules
+    that don't apply to this codebase (see inline comments).
+  - GitHub Actions CI now runs `mago fmt --check` and `mago lint` on every
+    push/PR (`mago` job, PHP 8.3).
+- `declare(strict_types=1)` in `ComponentAttributes` and `AttributeExtension`.
+- `@var array<string, mixed>` annotation on `ComponentAttributes::$attributes`;
+  explicit return type `mixed` on `__get`.
+
 ### Changed
 
 - **All props now route to a single bag.** Every key the caller passes —
