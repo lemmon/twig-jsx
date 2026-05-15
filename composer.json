@@ -2,12 +2,25 @@
     "name": "lemmon/twig-jsx",
     "description": "JSX-like component syntax for Twig",
     "license": "MIT",
+    "keywords": [
+        "twig",
+        "jsx",
+        "components",
+        "template",
+        "lexer",
+        "preprocessor"
+    ],
     "authors": [
         {
             "name": "Jakub Pelák",
             "email": "jpelak@gmail.com"
         }
     ],
+    "homepage": "https://github.com/lemmon/twig-jsx",
+    "support": {
+        "issues": "https://github.com/lemmon/twig-jsx/issues",
+        "source": "https://github.com/lemmon/twig-jsx"
+    },
     "require": {
         "php": "^8.1",
         "twig/twig": "^3.0"

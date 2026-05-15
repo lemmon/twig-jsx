@@ -8,92 +8,67 @@ once a stable release is cut.
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-05-15
+
+Initial release.
+
 ### Added
 
-- `llms.txt` at the project root — machine-readable summary for LLM-based
-  tooling (Cursor, Claude, Copilot, etc.), covering non-goals, all four
-  call-site forms, the component-side contract, and the full config option
-  list.
-- Mago static analysis toolchain (`carthage-software/mago ~1.27`):
-  - `composer format` — reformat `src/` and `tests/` in place
-  - `composer format:check` — check formatting without writing
-  - `composer lint` — lint the same paths
-  - `composer analyze` — static analysis (informational; vendor-class stubs
-    are not bundled, so some false-positive `non-existent-class` findings from
-    Twig/PHPUnit are expected when run locally)
-  - `composer check` — run `format:check`, `lint`, and `test` in sequence
-  - `mago.toml` at the project root pins the formatter style and disables rules
-    that don't apply to this codebase (see inline comments).
-  - GitHub Actions CI now runs `mago fmt --check` and `mago lint` on every
-    push/PR (`mago` job, PHP 8.3).
-- `declare(strict_types=1)` in `ComponentAttributes` and `AttributeExtension`.
-- `@var array<string, mixed>` annotation on `ComponentAttributes::$attributes`;
-  explicit return type `mixed` on `__get`.
-- `LICENSE` file (MIT).
-- `CHANGELOG.md`.
-- PHPUnit-based test suite (`tests/LexerTransformTest`, `tests/RenderTest`)
-  with `phpunit.xml.dist`, and a `composer test` script.
-- GitHub Actions CI: `composer validate --strict`, PHPUnit on PHP 8.1–8.4,
-  and a `prefer-lowest` job to catch loose dependency constraints.
-- `JSXPreLexer::transform(string $code): string` — a public seam that returns
-  the rewritten Twig source without going through the full tokenize pipeline.
+- **JSX-like component syntax for Twig.** `<Alert type="info" />` and
+  `<Alert>…</Alert>` tags are rewritten into native Twig `{% include %}` and
+  `{% embed %}` calls at the lexer level — no runtime overhead, no Symfony
+  dependency.
+- **Four call-site forms**, all routed into a single `props` bag:
+  - `<Alert type="info" />` — static string
+  - `<Alert type={expression} />` — Twig expression
+  - `<Alert {type} />` — shorthand, equivalent to `type={type}`
+  - `<Alert important />` — bare boolean, equivalent to `important={true}`
+- **`ComponentAttributes` props bag** with:
+  - `props.key` property access (returns `null` for missing keys; Twig's
+    `is defined` check works via `__isset`)
+  - `props.except('a', 'b', …)` — new bag without listed keys, for HTML
+    fallthrough spreading
+  - `{{ props|render }}` filter — renders entries as `key="value"` HTML
+    attribute pairs, with `htmlspecialchars` on both sides
+- **Bodied tags** render children into a Twig block (default `content`),
+  configurable via the `content_block` option.
+- **Single-pass character scanner** (`JsxSourceTransformer`) handles the
+  cases a naive regex preprocessor gets wrong:
+  - tags inside Twig string literals, `{# … #}` comments, and `<!-- … -->`
+    are passed through verbatim;
+  - same-name nested tags (`<Alert><Alert/></Alert>`) track depth correctly;
+  - `>` inside attribute string values does not truncate the tag;
+  - brace expressions balance `{`/`}` while respecting Twig string literals
+    (`foo={'a}b'}`, `foo={ {k: 'v'} }`);
+  - static prop values escape `\` and `'` before being spliced into the
+    generated single-quoted Twig literal.
+- **Loud `Twig\Error\SyntaxError`s** for unquoted attribute values,
+  unclosed tags, unterminated strings, and unclosed brace expressions.
+- **Configuration options** on `JSXPreLexer`:
 
-### Changed
+  | Option | Default | Description |
+  |---|---|---|
+  | `directory` | `components` | Subdirectory inside `templates/` |
+  | `extension` | `.twig` | File extension for component templates |
+  | `prefix` | `""` | Tag prefix; when empty, any Capitalized tag is treated as a component |
+  | `props_variable` | `props` | Name of the props bag inside the component template |
+  | `content_block` | `content` | Twig block name where a bodied tag's children are rendered |
 
-- **Call-site syntax flipped from Vue-style to Svelte/JSX-style.** Use
-  `name="literal"` for static strings and `name={expression}` for Twig
-  expressions; the `:` prefix is gone. Shorthand `{foo}` desugars to
-  `foo={foo}`. Bare attributes (`disabled`) still mean `true`.
-  The old `:foo` syntax now throws `Twig\Error\SyntaxError` with a
-  pointer to the new form rather than silently passing through.
-- **Replaced the two-pass regex preprocessor with a single-pass character
-  scanner** (`JsxSourceTransformer`). The regex implementation had four
-  structural blind spots that the scanner now handles correctly:
-  - tags inside Twig string literals, Twig comments, and HTML comments are
-    passed through verbatim instead of being rewritten;
-  - same-name nested tags (`<Alert><Alert/></Alert>`) track depth properly
-    instead of matching the first close;
-  - `>` inside attribute string values (`<Alert title="a>b" />`) no longer
-    truncates the tag;
-  - brace expressions correctly balance `{`/`}` while ignoring braces inside
-    Twig string literals (`foo={'a}b'}`, `foo={ {k: 'v'} }`).
-- **All props now route to a single bag.** Every key the caller passes —
-  semantic inputs and HTML fallthrough — arrives in one `ComponentAttributes`
-  object (default variable name `props`). The `known_props` routing rule is
-  removed; the component template owns the decision of what is a semantic
-  input versus a passthrough attribute. Destructure with
-  `{% set type = props.type %}` and spread leftovers with
-  `{{ props.except('type', ...)|render }}`.
-- Config option `attr_name` renamed to `props_variable`; default changed from
-  `'attributes'` to `'props'`. Update your `JSXPreLexer` constructor if you
-  were passing `attr_name`.
-- New config option `content_block` (default `'content'`) — the name of the
-  Twig block where a bodied tag's children are rendered. Override at lexer
-  init if you prefer `children`, `slot`, etc.
-- Unquoted attribute values (`foo=bar`) and unclosed tags now produce clear
-  `Twig\Error\SyntaxError`s instead of silently malformed output.
-- Both single- and double-quoted string attribute values are now accepted
-  (`type='info'` and `type="info"` are equivalent).
-- `composer.lock` is now tracked, for reproducible installs and CI runs.
-  Composer ignores library lockfiles when this package is installed as a
-  dependency, so consumers are unaffected.
-- `.gitignore` now covers common IDE folders (`.idea/`, `.vscode/`,
-  `.cursor/`, `.claude/`) and PHPUnit caches.
-- Bumped minimum PHP requirement from `>=8.0` to `^8.1`. PHP 8.0 has been
-  end-of-life since November 2023; the bump is a prerequisite for the
-  maintained PHPUnit 10 line.
+- **PHPUnit 10 test suite** (`LexerTransformTest`, `RenderTest`) and a
+  `composer test` script.
+- **Mago static-analysis toolchain** (`composer format`, `format:check`,
+  `lint`, `analyze`, `check`) with a `mago.toml` at the project root.
+- **GitHub Actions CI**: `composer validate --strict`, PHPUnit on PHP
+  8.1–8.4, `mago fmt --check` + `mago lint`, and a `prefer-lowest` job to
+  catch loose dependency constraints.
+- **`llms.txt`** at the project root — machine-readable summary for LLM
+  tooling.
+- **`LICENSE`** (MIT).
 
-### Removed
+### Requirements
 
-- **`known_props` config option removed.** All props go into the single bag.
-- `lemmon/clsx` is no longer a dependency, and `AttributeExtension` no
-  longer registers a `clsx` Twig function. The demo's `Alert.twig` was
-  rewritten to use plain conditional class concatenation. Anyone who wants
-  a class-merging helper can register one on their own Twig environment.
+- PHP `^8.1`
+- Twig `^3.0`
 
-### Fixed
-
-- Static prop values containing apostrophes or backslashes
-  (`<Alert message="It's mine" />`, `<Alert data-path="a\b" />`) no longer
-  produce invalid Twig source. The values are now escaped before being
-  spliced into the generated single-quoted Twig string literal.
+[Unreleased]: https://github.com/lemmon/twig-jsx/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/lemmon/twig-jsx/releases/tag/v0.1.0

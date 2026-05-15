@@ -11,8 +11,20 @@ use Twig\TokenStream;
 
 class JSXPreLexer extends Lexer
 {
+    /**
+     * @var array{
+     *     directory: string,
+     *     extension: string,
+     *     prefix: string,
+     *     props_variable: string,
+     *     content_block: string,
+     * }
+     */
     private array $config;
 
+    /**
+     * @param array<string, string> $options Overrides for the keys documented in {@see $config}.
+     */
     public function __construct(Environment $env, array $options = [])
     {
         parent::__construct($env);

@@ -22,7 +22,8 @@ All four forms compile into a single `props` bag inside the component template.
 <Alert important />             {# bare boolean — equivalent to important={true} #}
 ```
 
-Old `:foo="expr"` syntax is rejected with a `SyntaxError`.
+The Vue/Alpine-style `:foo="expr"` form is rejected with a `SyntaxError` that
+points at the supported syntax — use `foo={expr}` instead.
 
 ## Component-side Contract
 
@@ -76,4 +77,4 @@ Pass options as the second argument: `new JSXPreLexer($twig, ['props_variable' =
 ## Further Reading
 
 - [README](README.md) — full documentation with Quick Start and examples
-- [CHANGELOG](CHANGELOG.md) — version history and migration notes
+- [CHANGELOG](CHANGELOG.md) — version history

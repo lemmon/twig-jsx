@@ -271,10 +271,10 @@ final class LexerTransformTest extends TestCase
     // Error paths — the scanner refuses ambiguous syntax loudly.
     // ---------------------------------------------------------------------
 
-    public function testOldColonPrefixSyntaxThrowsSyntaxError(): void
+    public function testColonPrefixedAttributeThrowsSyntaxError(): void
     {
         $this->expectException(\Twig\Error\SyntaxError::class);
-        $this->expectExceptionMessage("':foo' attribute syntax is no longer supported");
+        $this->expectExceptionMessage("':foo' attribute syntax is not supported");
         $this->makeLexer()->transform('<Alert :type="x" />');
     }
 

@@ -199,10 +199,12 @@ final class JsxSourceTransformer
                 continue;
             }
 
-            // Old `:foo` syntax — be loud, not silent.
+            // `:foo` (Vue/Alpine-style attribute binding) is not part of this
+            // syntax; intercept it with a clear pointer to the supported forms
+            // instead of letting it fall through to a generic parser error.
             if ($c === ':') {
                 throw new SyntaxError(
-                    "The ':foo' attribute syntax is no longer supported; "
+                    "The ':foo' attribute syntax is not supported; "
                     . 'use foo={expression} for expressions, {foo} for shorthand, '
                     . 'or foo="literal" for static strings.',
                 );
