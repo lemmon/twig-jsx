@@ -44,7 +44,7 @@ Save your component in `templates/components/Alert.twig`:
 {% set message   = props.message|default('No message provided.') %}
 
 <div class="alert alert-{{ type }}{% if important %} alert-important{% endif %}{% if props.class|default('') %} {{ props.class }}{% endif %}"
-     {{ props.except('type', 'important', 'title', 'message', 'class')|render }}>
+     {{ props.except('type', 'important', 'title', 'message', 'class')|spread }}>
     {% if title %}<strong>{{ title }}</strong>{% endif %}
     {% block content %}{{ message }}{% endblock %}
 </div>
@@ -93,14 +93,14 @@ Every prop the caller passes — semantic inputs and HTML attributes alike — a
 {% set message = props.message|default('') %}
 
 {# Spread the remaining keys as HTML attributes #}
-<div class="alert-{{ type }}" {{ props.except('type', 'message')|render }}>
+<div class="alert-{{ type }}" {{ props.except('type', 'message')|spread }}>
     {{ message }}
 </div>
 ```
 
 - `props.key` — read any value
 - `props.except('a', 'b', ...)` — returns a new bag without the listed keys; useful for spreading HTML fallthrough attributes onto the root element
-- `{{ props|render }}` — renders all entries as HTML attribute pairs
+- `{{ props|spread }}` — renders all entries as HTML attribute pairs
 
 ## Configuration
 

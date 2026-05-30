@@ -4,7 +4,7 @@
 {% set message   = props.message|default('No message provided.') %}
 
 <div class="alert alert-{{ type }}{% if important %} alert-important{% endif %}{% if props.class|default('') %} {{ props.class }}{% endif %}"
-     {{ props.except('type', 'important', 'title', 'message', 'class')|render }}>
+     {{ props.except('type', 'important', 'title', 'message', 'class')|spread }}>
     {% if title %}<strong>{{ title }}</strong>{% endif %}
     {% block content %}{{ message }}{% endblock %}
 </div>

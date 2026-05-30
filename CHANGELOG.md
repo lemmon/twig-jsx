@@ -10,6 +10,10 @@ once a stable release is cut.
 
 ### Changed
 
+- **Renamed the attribute-rendering filter `render` → `spread`.** The new name
+  mirrors JSX spread (`{{ props|spread }}` ≈ `<div {...props}>`) and avoids
+  colliding with Symfony's `render()` / Twig's render concept. Update component
+  templates from `{{ props|render }}` to `{{ props|spread }}`.
 - **Quoted prop values containing a `{{ … }}` output tag are now rejected**
   with a `SyntaxError` that points at the expression form, instead of being
   passed through as literal text. A quoted value is a static string; dynamic

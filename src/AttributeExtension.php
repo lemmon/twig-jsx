@@ -21,8 +21,11 @@ class AttributeExtension extends AbstractExtension
     {
         // Marked is_safe=html because ComponentAttributes::__toString() runs
         // htmlspecialchars on every key and value before emitting.
+        //
+        // Named `spread` for the JSX analogy: `{{ props|spread }}` renders the
+        // bag onto the element exactly like `<div {...props}>` in JSX.
         return [
-            new TwigFilter('render', [$this, 'renderAttributes'], ['is_safe' => ['html']]),
+            new TwigFilter('spread', [$this, 'spreadAttributes'], ['is_safe' => ['html']]),
         ];
     }
 
@@ -34,7 +37,7 @@ class AttributeExtension extends AbstractExtension
         return new ComponentAttributes($attributes);
     }
 
-    public function renderAttributes(\Stringable|string $attributes): string
+    public function spreadAttributes(\Stringable|string $attributes): string
     {
         return (string) $attributes;
     }

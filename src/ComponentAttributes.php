@@ -6,7 +6,7 @@ namespace Lemmon\TwigJsx;
 
 /**
  * A smart object that holds all props passed to a component. Renders as HTML
- * attribute pairs when cast to string or used with the `|render` filter.
+ * attribute pairs when cast to string or used with the `|spread` filter.
  */
 class ComponentAttributes implements \Stringable
 {

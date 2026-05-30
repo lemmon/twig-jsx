@@ -41,14 +41,14 @@ Every prop arrives in a single `ComponentAttributes` bag named `props` by defaul
 {% set message = props.message|default('') %}
 
 {# Spread remaining keys as HTML attributes #}
-<div class="alert-{{ type }}" {{ props.except('type', 'message')|render }}>
+<div class="alert-{{ type }}" {{ props.except('type', 'message')|spread }}>
     {% block content %}{{ message }}{% endblock %}
 </div>
 ```
 
 - `props.key` — read any value
 - `props.except('a', 'b')` — new bag without listed keys; for HTML fallthrough
-- `{{ props|render }}` — renders all entries as `key="value"` attribute pairs
+- `{{ props|spread }}` — renders all entries as `key="value"` attribute pairs
 
 Bodied tags render children into a Twig block:
 

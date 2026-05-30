@@ -91,7 +91,7 @@ final class RenderTest extends TestCase
     public function testHtmlAttributesArePassedThroughViaPropsBag(): void
     {
         $twig = $this->makeTwig([
-            'components/Alert.twig' => '<div {{ props|render }}>x</div>',
+            'components/Alert.twig' => '<div {{ props|spread }}>x</div>',
             'page' => '<Alert class="shadow" data-id="42" />',
         ]);
 
@@ -104,7 +104,7 @@ final class RenderTest extends TestCase
     public function testValuelessUnknownAttributeRendersAsHtmlBoolean(): void
     {
         $twig = $this->makeTwig([
-            'components/Alert.twig' => '<button {{ props|render }}>x</button>',
+            'components/Alert.twig' => '<button {{ props|spread }}>x</button>',
             'page' => '<Alert disabled />',
         ]);
 
@@ -114,7 +114,7 @@ final class RenderTest extends TestCase
     public function testExceptRemovesKeyFromPropsBag(): void
     {
         $twig = $this->makeTwig([
-            'components/Alert.twig' => '<div class="own {{ props.class }}" {{ props.except("class")|render }}>x</div>',
+            'components/Alert.twig' => '<div class="own {{ props.class }}" {{ props.except("class")|spread }}>x</div>',
             'page' => '<Alert class="extra" data-id="42" />',
         ]);
 
@@ -137,7 +137,7 @@ final class RenderTest extends TestCase
     public function testBackslashInStaticAttributeRendersCorrectly(): void
     {
         $twig = $this->makeTwig([
-            'components/Alert.twig' => '<a {{ props|render }}>x</a>',
+            'components/Alert.twig' => '<a {{ props|spread }}>x</a>',
             'page' => '<Alert data-path="a\\b" />',
         ]);
 
