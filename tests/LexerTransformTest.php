@@ -267,6 +267,26 @@ final class LexerTransformTest extends TestCase
         );
     }
 
+    // The `{{ … }}` rejection is deliberately scoped to output tags. A `{% … %}`
+    // statement and bare single braces carry no interpolation, so they stay
+    // literal text — a quoted value is a static string.
+
+    public function testStatementTagInQuotedValueStaysLiteral(): void
+    {
+        $this->assertSame(
+            "{% include 'components/Alert.twig' with {'props': create_attributes({'raw': '{% if x %}'})} %}",
+            $this->makeLexer()->transform('<Alert raw="{% if x %}" />'),
+        );
+    }
+
+    public function testSingleBracesInQuotedValueStayLiteral(): void
+    {
+        $this->assertSame(
+            "{% include 'components/Alert.twig' with {'props': create_attributes({'tpl': 'a {b} c'})} %}",
+            $this->makeLexer()->transform('<Alert tpl="a {b} c" />'),
+        );
+    }
+
     // ---------------------------------------------------------------------
     // Error paths — the scanner refuses ambiguous syntax loudly.
     // ---------------------------------------------------------------------
@@ -283,6 +303,20 @@ final class LexerTransformTest extends TestCase
         $this->expectException(\Twig\Error\SyntaxError::class);
         $this->expectExceptionMessage('Unquoted attribute values are not supported');
         $this->makeLexer()->transform('<Alert foo=bar />');
+    }
+
+    public function testOutputTagInQuotedValueThrowsSyntaxError(): void
+    {
+        $this->expectException(\Twig\Error\SyntaxError::class);
+        $this->expectExceptionMessage("Quoted attribute 'title' contains a Twig output tag");
+        $this->makeLexer()->transform('<Alert title="{{ name }}" />');
+    }
+
+    public function testOutputTagAmongTextInQuotedValueThrowsSyntaxError(): void
+    {
+        $this->expectException(\Twig\Error\SyntaxError::class);
+        $this->expectExceptionMessage('expression form for a dynamic value');
+        $this->makeLexer()->transform('<Alert class="alert-{{ type }}" />');
     }
 
     public function testUnclosedBodiedTagThrowsSyntaxError(): void

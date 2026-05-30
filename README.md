@@ -73,6 +73,15 @@ Save your component in `templates/components/Alert.twig`:
 | **Shorthand** | `{type}` | `'type': type` |
 | **Boolean** | `important` | `'important': true` |
 
+A quoted value is a **static string** — it is not interpolated. For a dynamic
+value, use the expression form: `class={'alert-' ~ type}` rather than
+`class="alert-{{ type }}"`. A quoted value containing a `{{ … }}` output tag is
+rejected with a `SyntaxError` that points at the expression form, instead of
+silently passing the literal text. (To pass a literal `{{ … }}` through, wrap it
+in a quoted expression: `tpl={'{{ name }}'}`.) See
+[docs/decisions/0001-no-interpolation-in-quoted-props.md](docs/decisions/0001-no-interpolation-in-quoted-props.md)
+for the reasoning.
+
 ## How a Component Reads Its Inputs
 
 Every prop the caller passes — semantic inputs and HTML attributes alike — arrives in a single

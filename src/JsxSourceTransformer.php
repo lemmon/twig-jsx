@@ -273,7 +273,10 @@ final class JsxSourceTransformer
     /**
      * Parse the value after `=`. Returns either a literal string or a
      * brace-balanced Twig expression. Unquoted values (`foo=bar`) are
-     * rejected.
+     * rejected, and a quoted value carrying a `{{ … }}` output tag is
+     * rejected with a pointer to the expression form — a quoted value is a
+     * static string, so silently passing the literal `{{ … }}` would be a
+     * footgun. See docs/decisions/0001-no-interpolation-in-quoted-props.md.
      *
      * @return array{0: 'string'|'expr', 1: string}
      */
@@ -303,6 +306,23 @@ final class JsxSourceTransformer
             }
             $value = substr($this->code, $start, $this->pos - $start);
             $this->pos++; // consume closing quote
+
+            // A quoted value is a static string; it is not interpolated. A
+            // `{{ … }}` here is almost always a mistake (the author expects
+            // Vue/Twig-attribute interpolation), so reject it and point at the
+            // expression form instead of silently passing the literal text.
+            if (str_contains($value, '{{')) {
+                throw new SyntaxError(sprintf(
+                    "Quoted attribute '%s' contains a Twig output tag ('{{ … }}'), but quoted "
+                    . 'values are static strings and are not interpolated. Use the expression form '
+                    . "for a dynamic value (%s={'prefix-' ~ value}), or wrap the text in a quoted "
+                    . "expression to pass it through literally (%s={'{{ value }}'}).",
+                    $forAttribute,
+                    $forAttribute,
+                    $forAttribute,
+                ));
+            }
+
             return ['string', $value];
         }
 

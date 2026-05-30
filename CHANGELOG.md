@@ -8,6 +8,16 @@ once a stable release is cut.
 
 ## [Unreleased]
 
+### Changed
+
+- **Quoted prop values containing a `{{ … }}` output tag are now rejected**
+  with a `SyntaxError` that points at the expression form, instead of being
+  passed through as literal text. A quoted value is a static string; dynamic
+  values use the expression form (`class={'alert-' ~ type}`). To pass a literal
+  `{{ … }}`, wrap it in a quoted expression (`tpl={'{{ name }}'}`). `{% … %}`
+  statements and bare single braces in a quoted value remain literal. See
+  `docs/decisions/0001-no-interpolation-in-quoted-props.md` for the rationale.
+
 ## [0.1.0] - 2026-05-15
 
 Initial release.

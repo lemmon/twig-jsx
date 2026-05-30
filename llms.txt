@@ -22,6 +22,12 @@ All four forms compile into a single `props` bag inside the component template.
 <Alert important />             {# bare boolean — equivalent to important={true} #}
 ```
 
+A quoted value is a static string and is not interpolated. For a dynamic value
+use the expression form (`type={userType}`, `class={'alert-' ~ type}`), not
+`class="alert-{{ type }}"` — a quoted value containing a `{{ … }}` output tag is
+rejected with a `SyntaxError` that points at the expression form. (`{% … %}`
+statements and bare single braces in a quoted value stay literal.)
+
 The Vue/Alpine-style `:foo="expr"` form is rejected with a `SyntaxError` that
 points at the supported syntax — use `foo={expr}` instead.
 
