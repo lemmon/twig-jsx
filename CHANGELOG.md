@@ -8,6 +8,8 @@ once a stable release is cut.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-06-30
+
 ### Changed
 
 - **Renamed the attribute-rendering filter `render` → `spread`.** The new name
@@ -84,5 +86,6 @@ Initial release.
 - PHP `^8.1`
 - Twig `^3.0`
 
-[Unreleased]: https://github.com/lemmon/twig-jsx/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/lemmon/twig-jsx/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/lemmon/twig-jsx/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/lemmon/twig-jsx/releases/tag/v0.1.0
