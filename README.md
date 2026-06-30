@@ -2,6 +2,7 @@
 
 JSX-like component syntax for Twig.
 
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/lemmon/twig-jsx.svg)](https://packagist.org/packages/lemmon/twig-jsx)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![PHP](https://img.shields.io/badge/php-%5E8.1-blue)](https://php.net)
 [![Twig](https://img.shields.io/badge/twig-%5E3.0-green)](https://twig.symfony.com)
